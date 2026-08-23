@@ -62,7 +62,7 @@ async function scrapeByPhone(phoneNumber, cookieHeaderString) {
 
         // 2. Type phone number into search input
         const searchInputSelector = '#searchInput';
-        await page.waitForSelector(searchInputSelector, { timeout: 10000 });
+        await page.waitForSelector(searchInputSelector, { timeout: 1000 });
         await page.click(searchInputSelector);
         
         // Clear input and type phone
@@ -73,7 +73,7 @@ async function scrapeByPhone(phoneNumber, cookieHeaderString) {
 
         // 3. Wait for search results container to populate
         const firstResultSelector = '#searchResults li a[href*="/user/consignment/"]';
-        await page.waitForSelector(firstResultSelector, { timeout: 8000 }).catch(() => {
+        await page.waitForSelector(firstResultSelector, { timeout: 3000 }).catch(() => {
             throw new Error(`No consignment results found for phone number: ${phoneNumber}`);
         });
 
@@ -116,7 +116,11 @@ async function scrapeByPhone(phoneNumber, cookieHeaderString) {
         const approvedAt = parcelInfo.find('p:contains("Approved at:")').text().replace('Approved at:', '').trim();
         const weight = parcelInfo.find('p:contains("Weight :") span').text().trim();
         const codAmount = parcelInfo.find('h6:contains("COD:")').text().replace('COD:', '').trim();
-        const deliveryStatus = parcelInfo.find('label.alert').text().trim();
+        const deliveryStatus = parcelInfo.find('label.alert')
+            .map((_, el) => $(el).text().trim().replace(/\s+/g, ' '))
+            .get()
+            .slice(0, 2)
+            .join(' ');
         const deliveryCharge = parcelInfo.find('p:contains("Delivery Charge :") span').text().trim();
 
         // Customer details
