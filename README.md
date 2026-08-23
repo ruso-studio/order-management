@@ -6,12 +6,20 @@ A simple mobile-first order entry app for a single user.
 
 ```bash
 cd /workspaces/order-management
-python3 -m http.server 8000
+STEADFAST_COOKIE='your Steadfast browser cookie' npm start
 ```
 
 Open:
 
-- `http://localhost:8000`
+- `http://localhost:3000`
+
+The API endpoint is `POST /api/get_status_by_phone` with a JSON body such as:
+
+```json
+{ "phone": "01717754195" }
+```
+
+Set `STEADFAST_COOKIE` to the raw authenticated cookie header from Steadfast. Keep it server-side; it is not sent in API requests.
 
 Login:
 
