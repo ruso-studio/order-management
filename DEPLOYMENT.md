@@ -40,7 +40,8 @@ The login is stored in a browser cookie for 7 days.
 
 1. Create a web service on Render connected to `ruso-studio/order-management`, or use the included `render.yaml` blueprint. The Dockerfile installs Puppeteer's Chromium runtime libraries.
 2. Set the secret environment variable `STEADFAST_COOKIE` in the hosting provider dashboard. Never commit `.env` or place the cookie in frontend JavaScript.
-3. Deploy using the Dockerfile (configured automatically by the blueprint).
+3. Deploy using the Dockerfile (configured automatically by the blueprint). The image explicitly installs the Chrome version required by Puppeteer.
+   If the existing Render service is configured with the Node runtime instead, set its build command to `npm ci` so the `postinstall` script installs Chrome, or recreate it from the `render.yaml` Docker blueprint.
 4. Confirm `https://YOUR-BACKEND-URL/health` returns `{"status":"ok"}`.
 
 Call the live API at `https://YOUR-BACKEND-URL/api/get_status_by_phone`:

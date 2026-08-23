@@ -30,7 +30,8 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
+RUN npm ci --ignore-scripts && npx puppeteer browsers install chrome
 COPY . .
 
 ENV NODE_ENV=production
