@@ -14,9 +14,12 @@ RUN apt-get update \
     libdrm2 \
     libgbm1 \
     libglib2.0-0 \
+    libgtk-3-0 \
     libnspr4 \
     libnss3 \
     libpango-1.0-0 \
+    libxkbcommon0 \
+    libxshmfence1 \
     libx11-6 \
     libx11-xcb1 \
     libxcb1 \
