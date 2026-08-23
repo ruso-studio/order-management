@@ -6,7 +6,9 @@ A simple mobile-first order entry app for a single user.
 
 ```bash
 cd /workspaces/order-management
-STEADFAST_COOKIE='your Steadfast browser cookie' npm start
+cp .env.example .env
+# Set STEADFAST_COOKIE in .env, then:
+npm start
 ```
 
 Open:
@@ -20,6 +22,15 @@ The API endpoint is `POST /api/get_status_by_phone` with a JSON body such as:
 ```
 
 Set `STEADFAST_COOKIE` to the raw authenticated cookie header from Steadfast. Keep it server-side; it is not sent in API requests.
+
+The API runs on the Node backend, not on GitHub Pages. Deploy the backend using `render.yaml` and `Dockerfile` or another Node hosting service with Puppeteer system libraries, then call its URL:
+
+```text
+POST https://your-backend-host.example/api/get_status_by_phone
+Content-Type: application/json
+```
+
+GitHub Pages remains available at `https://ruso-studio.github.io/order-management/` for the static frontend. The API cannot use that URL because GitHub Pages cannot run Express or Puppeteer.
 
 Login:
 
