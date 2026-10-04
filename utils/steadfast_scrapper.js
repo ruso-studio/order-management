@@ -1,6 +1,33 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 
+function parseCookieHeader(cookieHeaderString) {
+    const cookies = cookieHeaderString
+        .replace(/\r?\n/g, '')
+        .replace(/\s*;\s*/g, ';')
+        .split(';')
+        .map(part => {
+            const separator = part.indexOf('=');
+            if (separator < 1) {
+                return null;
+            }
+
+            return {
+                name: part.slice(0, separator).trim(),
+                value: part.slice(separator + 1).trim(),
+                domain: '.steadfast.com.bd',
+                path: '/'
+            };
+        })
+        .filter(cookie => cookie && cookie.value);
+
+    if (!cookies.length) {
+        throw new Error('Steadfast cookie header is missing or malformed. Set STEADFAST_COOKIE as one complete, single-line cookie header.');
+    }
+
+    return cookies;
+}
+
 /**
  * Scrapes Steadfast consignment details by phone number.
  * 
@@ -15,6 +42,8 @@ async function scrapeByPhone(phoneNumber, cookieHeaderString) {
     if (!cookieHeaderString) {
         throw new Error("Session cookie string is required for authenticated dashboard access.");
     }
+
+    const cookies = parseCookieHeader(cookieHeaderString);
 
     // Launch headless browser
     const browser = await puppeteer.launch({
@@ -38,15 +67,6 @@ async function scrapeByPhone(phoneNumber, cookieHeaderString) {
         );
 
         // Parse and set cookies dynamically
-        const cookies = cookieHeaderString.split(';').map(pair => {
-            const [name, ...val] = pair.trim().split('=');
-            return {
-                name: name.trim(),
-                value: val.join('=').trim(),
-                domain: '.steadfast.com.bd',
-                path: '/'
-            };
-        });
         await page.setCookie(...cookies);
 
         // 1. Navigate to Dashboard
@@ -56,13 +76,13 @@ async function scrapeByPhone(phoneNumber, cookieHeaderString) {
         });
 
         // Check if session expired (redirected to login)
-        if (page.url().includes('/login')) {
+        if (page.url().includes('/login') || await page.$('form[action*="login"]')) {
             throw new Error("Authentication failed. Session cookie might be expired or invalid.");
         }
 
         // 2. Type phone number into search input
-        const searchInputSelector = '#searchInput';
-        await page.waitForSelector(searchInputSelector, { timeout: 1000 });
+        const searchInputSelector = '#searchInput, input[name="search"], input[placeholder*="Search" i]';
+        await page.waitForSelector(searchInputSelector, { timeout: 10000 });
         await page.click(searchInputSelector);
         
         // Clear input and type phone
@@ -178,4 +198,4 @@ async function scrapeByPhone(phoneNumber, cookieHeaderString) {
     }
 }
 
-module.exports = { scrapeByPhone };
+module.exports = { parseCookieHeader, scrapeByPhone };

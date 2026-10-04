@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/order-parser.test.js",
+    "test": "node tests/order-parser.test.js && node tests/steadfast-scraper.test.js",
     "postinstall": "puppeteer browsers install chrome"
   },
   "dependencies": {
