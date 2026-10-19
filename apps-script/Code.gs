@@ -164,9 +164,7 @@ function getNextOrderId(sheet, lastOccupiedRow) {
     clean(sheet.getRange(lastOccupiedRow, 5).getDisplayValue()),
   );
   if (!Number.isFinite(value))
-    throw new Error(
-      `The latest occupied row (${lastOccupiedRow}) has no numeric ID in column E.`,
-    );
+    return 1000
   return value + 1;
 }
 
