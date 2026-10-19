@@ -1,7 +1,7 @@
-
+import { password, api_creds } from "./cred.js";
 const APP_CONFIG = {
   LOGIN_USERNAME: "admin",
-  LOGIN_PASSWORD: env.password,
+  LOGIN_PASSWORD: password,
   COOKIE_NAME: "order_management_auth",
   COOKIE_DAYS: 7,
   SHEET_WEB_APP_URL:
@@ -9,8 +9,8 @@ const APP_CONFIG = {
 };
 const STEADFAST_API_BASE_URL = "https://portal.packzy.com/api/v1";
 const STEADFAST_KEY_STORAGE = {
-  api: env.api_key,
-  secret: env.secret_key,
+  api: api_creds.apiKey,
+  secret: api_creds.apiSecret,
 };
 
 const PRESETS = {
