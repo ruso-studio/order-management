@@ -38,7 +38,9 @@ function doPost(e) {
         throw new Error(
           "Order ID no longer matches the target row. Parcel details were not written to the sheet.",
         );
-      sheet.getRange(row, 8).setValue(clean(payload.parcelId));
+      const parcelId = clean(payload.parcelId);
+      if (!parcelId) throw new Error("Parcel ID is required for parcel update.");
+      sheet.getRange(row, 8).setValue(parcelId);
       sheet.getRange(row, 12).setValue(clean(payload.status));
       SpreadsheetApp.flush();
       return jsonResponse({
@@ -151,22 +153,23 @@ function findNextOrderRow(sheet) {
   const values = sheet
     .getRange(ORDER_START_ROW, 3, ORDER_END_ROW - ORDER_START_ROW + 1, 1)
     .getDisplayValues();
-  let lastOccupied = ORDER_START_ROW - 1;
-  values.forEach((row, index) => {
-    if (clean(row[0])) lastOccupied = ORDER_START_ROW + index;
-  });
-  return lastOccupied + 1;
+  for (let index = values.length - 1; index >= 0; index--) {
+    if (clean(values[index][0])) return ORDER_START_ROW + index + 1;
+  }
+  return ORDER_START_ROW;
 }
 
-function getNextOrderId(sheet, lastOccupiedRow) {
-  if (lastOccupiedRow < ORDER_START_ROW) return 1;
-  const ids = sheet
-    .getRange(ORDER_START_ROW, 5, lastOccupiedRow - ORDER_START_ROW + 1, 1)
-    .getDisplayValues()
-    .flat()
-    .map((value) => Number(clean(value)))
-    .filter((value) => Number.isFinite(value) && value > 0);
-  return ids.length ? Math.max(...ids) + 1 : 1000;
+function getNextOrderId(sheet) {
+  const rows = sheet
+    .getRange(ORDER_START_ROW, 3, ORDER_END_ROW - ORDER_START_ROW + 1, 3)
+    .getDisplayValues();
+  let highestId = 1000;
+  rows.forEach((row) => {
+    if (!clean(row[0])) return;
+    const match = clean(row[2]).match(/^(?:ORD-)?(\d+)$/i);
+    if (match) highestId = Math.max(highestId, Number(match[1]));
+  });
+  return `ORD-${highestId + 1}`;
 }
 
 function clean(value) {

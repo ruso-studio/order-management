@@ -23,10 +23,11 @@ Order behavior
 - The order type switch supports Online and Direct; pasted message text detects type automatically. English and Bengali labels are parsed.
 - Direct blank customer name becomes `Direct sell`. Model matching is exact (case-insensitive); a selected catalog item populates its unit price.
 - Online orders may create a parcel. The browser calls `POST https://portal.packzy.com/api/v1/create_order` with `Api-Key`, `Secret-Key`, and `Content-Type: application/json` headers.
-- Payload keys follow Steadfast's guide: invoice, recipient_name, recipient_phone, recipient_address, cod_amount, and item_description. COD amount is selling price plus delivery charge.
+- Payload keys follow Steadfast's guide: invoice, recipient_name, recipient_phone, recipient_address, cod_amount, and item_description. COD amount is the entered selling price; delivery charge is not added.
 - Credentials are read first from `cred.js` (`api_creds.apiKey`, `api_creds.apiSecret`); Settings session values are fallback credentials. Since `cred.js` ships to the browser, its keys are visible to app users. Direct browser calls require Steadfast to allow the GitHub Pages origin via CORS.
 - Item description contains the order message fields and COD amount (selling price plus delivery charge), including the address; it excludes unit price. Note is optional and sent as the Steadfast `note` field.
-- After Apps Script saves an order and returns its row/ID, the app makes the Steadfast call. On success it posts the returned consignment ID and status via `action: updateParcel`; J/K formulas are not altered. A confirmation modal shows the returned consignment ID, tracking code, and tracking link.
+- Order IDs are generated as `ORD-1001`, `ORD-1002`, etc., continuing from the highest numeric or `ORD-` ID in rows with a product in column C. The next order is written below the last row with a product in column C, even if there are gaps between earlier orders.
+- After Apps Script saves an order and returns its row/ID, the app makes the Steadfast call. On success it posts the returned consignment ID to H and status to L via `action: updateParcel` (using `Pending` if Steadfast omits the status); J/K formulas are not altered. A confirmation modal shows the returned consignment ID, tracking code, and tracking link.
 - If courier creation fails after order save, the order stays saved and the app reports the parcel error.
 
 Apps Script deployment

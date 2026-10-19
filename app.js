@@ -226,8 +226,8 @@ function updateDescription() {
     $("address").value.trim() && `Address: ${$("address").value.trim()}`,
     $("shoeModel").value.trim() && `Shoe: ${$("shoeModel").value.trim()}`,
     $("size").value.trim() && `Size: ${$("size").value.trim()}`,
-    $("sellingPrice").value && `Selling price: ${$("sellingPrice").value}`,
-    $("deliveryCharge").value && `Delivery amount: ${$("deliveryCharge").value}`,
+    $("sellingPrice").value && `Price: ${$("sellingPrice").value}`,
+    $("deliveryCharge").value && `Delivery Charge: ${$("deliveryCharge").value}`,
   ].filter(Boolean);
   field.value = parts.join(" | ").slice(0, 255);
 }
@@ -369,9 +369,7 @@ async function createParcel(payload, invoice) {
     throw new Error(
       "Steadfast requires an 11-digit Bangladesh mobile number beginning with 01.",
     );
-  const sellingPrice = Number(payload.sellingPrice);
-  const deliveryCharge = Number(payload.deliveryCharge || 0);
-  const codAmount = sellingPrice + deliveryCharge;
+  const codAmount = Number(payload.sellingPrice);
   if (!Number.isFinite(codAmount) || codAmount < 0 || codAmount > 1000000)
     throw new Error("COD amount must be between 0 and 1,000,000.");
   const order = {
@@ -410,7 +408,7 @@ async function createParcel(payload, invoice) {
       consignmentId: consignment.consignment_id,
       trackingCode: consignment.tracking_code || "",
       trackingUrl: consignment.tracking_link || "",
-      parcelStatus: consignment.status || "",
+      parcelStatus: consignment.status || "Pending",
     };
   } catch (error) {
     if (error.message === "Failed to fetch")
@@ -424,8 +422,8 @@ async function createParcel(payload, invoice) {
 function showParcelModal(parcel, sheetSyncError = "") {
   $("parcelIdValue").textContent = parcel.consignmentId || "—";
   $("trackingCodeValue").textContent = parcel.trackingCode || "—";
-  $("parcelTrackingLink").href = parcel.trackingUrl || "#";
-  $("parcelTrackingLink").hidden = !parcel.trackingUrl;
+  $("parcelTrackingLink").href = parcel.consignmentId ? `https://steadfast.com.bd/user/consignment/${parcel.consignmentId}` : "#";
+  $("parcelTrackingLink").hidden = !parcel.consignmentId;
   $("parcelSyncMessage").textContent = sheetSyncError
     ? `Parcel created, but its details could not be saved to the order sheet: ${sheetSyncError}`
     : "";

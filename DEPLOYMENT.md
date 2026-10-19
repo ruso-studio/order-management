@@ -26,7 +26,7 @@ There is no installable trigger. Do not add one for order entry. Apps Script doe
 2. Deploy the updated static app to GitHub Pages.
 3. Open the app and sign in.
 4. If `cred.js` credentials are unavailable, use **Settings** to enter backup keys; they are kept in `sessionStorage` for that browser session.
-5. Select an Online order and enable **Create Steadfast parcel** to submit the documented `POST https://portal.packzy.com/api/v1/create_order` request. The invoice uses the entered Order ID, or the generated ID when blank.
+5. Select an Online order and enable **Create Steadfast parcel** to submit the documented `POST https://portal.packzy.com/api/v1/create_order` request.  The invoice is the next order ID returned by Apps Script (`ORD-1001`, `ORD-1002`, and so on, continuing after existing numeric or `ORD-` IDs in occupied rows). The app saves Steadfast's returned consignment ID to column H and status to column L; if the response omits a status, it saves `Pending`.
 
 `cred.js` is shipped with the frontend, so its keys are visible to anyone who can access the deployed app; use this only if that exposure is acceptable. Settings are a session-only fallback. Browser access to Steadfast also depends on the API allowing cross-origin requests from the Pages origin.
 
@@ -47,4 +47,4 @@ Open `http://localhost:3000`. The Node service provides the app locally and the 
 
 ## Order ID, description, and note
 
-The optional Order ID / invoice field is written to column E and used as the Steadfast invoice. If blank, Apps Script uses one more than the greatest numeric ID already in the sheet. Item description is generated from the customer message details, address, and COD amount; it excludes unit cost. It remains editable and is sent as Steadfast `item_description`. The optional Note is sent as Steadfast `note`. These text fields are not saved in the Current sheet because it has no columns for them.
+The optional Order ID / invoice field is written to column E and used as the Steadfast invoice. If blank, Apps Script generates an `ORD-` ID by incrementing the highest numeric or `ORD-` ID among rows with a product in column C. New orders are written below the last row with a product in column C, even if there are blank rows between earlier orders. Item description is generated from the shoe, size, unit price, selling price (shown as “Price” in the description), delivery charge, and extra cost; it remains editable and is sent as Steadfast `item_description`. COD amount is the entered selling price only; the delivery charge is not added. The optional Note is sent as Steadfast `note`. These two text fields are not saved in the Current sheet because it has no columns for them.
