@@ -27,14 +27,14 @@ function doPost(e) {
     if (payload.action === "updateParcel") {
       const sheet = getOrdersSheet();
       const row = Number(payload.row);
-      const orderId = Number(payload.orderId);
+      const orderId = clean(payload.orderId);
       if (
         !Number.isInteger(row) ||
         row < ORDER_START_ROW ||
         row > ORDER_END_ROW
       )
         throw new Error("Invalid order row for parcel update.");
-      if (Number(sheet.getRange(row, 5).getDisplayValue()) !== orderId)
+      if (clean(sheet.getRange(row, 5).getDisplayValue()) !== orderId)
         throw new Error(
           "Order ID no longer matches the target row. Parcel details were not written to the sheet.",
         );
@@ -63,7 +63,7 @@ function doPost(e) {
       throw new Error(
         `The Current tab is full. Orders can be entered through row ${ORDER_END_ROW}.`,
       );
-    const orderId = getNextOrderId(sheet, targetRow - 1);
+    const orderId = clean(payload.orderId) || getNextOrderId(sheet, targetRow - 1);
     // Product is the sheet's occupancy marker (column C); preserve blank form submissions with an explicit marker.
     const model = clean(payload.shoeModel) || "Unspecified product";
     const customerName =

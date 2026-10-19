@@ -42,6 +42,9 @@ const fields = [
   "extraCost",
   "parcelId",
   "status",
+  "orderId",
+  "description",
+  "note",
 ];
 
 function cookie(name) {
@@ -136,7 +139,10 @@ function applyParsed(parsed) {
       $(key).value = parsed[key];
   });
   delete $("unitPrice").dataset.edited;
+  if (parsed.description) $("description").dataset.edited = "true";
+  else delete $("description").dataset.edited;
   syncProductPrice(Boolean(parsed.shoeModel));
+  updateDescription();
 }
 
 function parseMessage() {
@@ -157,6 +163,7 @@ function syncProductPrice(force) {
     if (force || !$("unitPrice").dataset.edited)
       $("unitPrice").value = match.price;
     $("unitPrice").dataset.productPrice = match.price;
+    updateDescription();
     return;
   }
   if (force) {
@@ -164,6 +171,7 @@ function syncProductPrice(force) {
     delete $("unitPrice").dataset.edited;
   }
   delete $("unitPrice").dataset.productPrice;
+  updateDescription();
 }
 
 async function loadProducts() {
@@ -209,6 +217,19 @@ function collectPayload() {
   };
 }
 
+function updateDescription() {
+  const field = $("description");
+  if (field.dataset.edited) return;
+  field.value = [
+    $("shoeModel").value.trim() && `Shoe: ${$("shoeModel").value.trim()}`,
+    $("size").value.trim() && `Size: ${$("size").value.trim()}`,
+    $("unitPrice").value && `Unit price: ${$("unitPrice").value}`,
+    $("sellingPrice").value && `Selling price: ${$("sellingPrice").value}`,
+    $("deliveryCharge").value && `Delivery: ${$("deliveryCharge").value}`,
+    $("extraCost").value && `Extra cost: ${$("extraCost").value}`,
+  ].filter(Boolean).join(" | ").slice(0, 255);
+}
+
 async function submitOrder(event) {
   event.preventDefault();
   const button = $("submitOrderBtn");
@@ -222,6 +243,10 @@ async function submitOrder(event) {
         "Add your Steadfast API credentials in Settings before submitting this parcel.",
         "error",
       );
+      return;
+    }
+    if (payload.orderId && (!/^[A-Za-z0-9_-]{1,100}$/.test(payload.orderId))) {
+      toast("Invoice must contain only letters, numbers, hyphens, or underscores (max 100 characters).", "error");
       return;
     }
     const missing = [
@@ -271,6 +296,7 @@ async function submitOrder(event) {
     $("orderForm").reset();
     $("orderInput").value = "";
     delete $("unitPrice").dataset.edited;
+    delete $("description").dataset.edited;
     state.manualType = false;
     setOrderType("online", true);
     syncProductPrice(false);
@@ -340,24 +366,14 @@ async function createParcel(payload, invoice) {
   const codAmount = sellingPrice + deliveryCharge;
   if (!Number.isFinite(codAmount) || codAmount < 0 || codAmount > 1000000)
     throw new Error("COD amount must be between 0 and 1,000,000.");
-  const itemDescription = [
-    payload.shoeModel && `Shoe: ${payload.shoeModel}`,
-    payload.size && `Size: ${payload.size}`,
-    payload.unitPrice && `Unit price: ${payload.unitPrice}`,
-    payload.sellingPrice && `Selling price: ${payload.sellingPrice}`,
-    payload.deliveryCharge && `Delivery: ${payload.deliveryCharge}`,
-    payload.extraCost && `Extra cost: ${payload.extraCost}`,
-  ]
-    .filter(Boolean)
-    .join(" | ")
-    .slice(0, 255);
   const order = {
     invoice: String(invoice),
     recipient_name: payload.name.trim().slice(0, 100),
     recipient_phone: phone,
     recipient_address: payload.address.trim().slice(0, 490),
     cod_amount: codAmount,
-    item_description: itemDescription,
+    item_description: String(payload.description || "").slice(0, 255),
+    note: String(payload.note || "").slice(0, 480),
   };
   try {
     const response = await fetch(`${STEADFAST_API_BASE_URL}/create_order`, {
@@ -455,6 +471,8 @@ function init() {
     );
   $("shoeModel").addEventListener("change", () => syncProductPrice(true));
   $("shoeModel").addEventListener("input", () => syncProductPrice(false));
+  ["shoeModel", "size", "unitPrice", "sellingPrice", "deliveryCharge", "extraCost"].forEach((id) => $(id).addEventListener("input", updateDescription));
+  $("description").addEventListener("input", () => { $("description").dataset.edited = "true"; });
   $("unitPrice").addEventListener(
     "input",
     () => ($("unitPrice").dataset.edited = "true"),

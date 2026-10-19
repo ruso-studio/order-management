@@ -10,6 +10,9 @@
     unitPrice: ['unit price', 'raw price', 'ক্রয় মূল্য'],
     extraCost: ['extra cost', 'অতিরিক্ত খরচ'],
     parcelId: ['parcel id', 'consignment id', 'পার্সেল আইডি'],
+    orderId: ['order id', 'order number', 'invoice', 'invoice id', 'অর্ডার আইডি', 'অর্ডার নম্বর', 'ইনভয়েস'],
+    description: ['description', 'item description', 'বিবরণ', 'পণ্যের বিবরণ'],
+    note: ['note', 'নোট'],
   };
   const clean = (value) => String(value || '').trim().toLocaleLowerCase().replace(/[：]/g, ':').replace(/\s+/g, ' ');
   const normalizeDigits = (value) => String(value || '').replace(/[০-৯]/g, (digit) => String('০১২৩৪৫৬৭৮৯'.indexOf(digit)));
@@ -38,7 +41,7 @@
     return hasShoeAndPrice ? 'direct' : 'online';
   }
   function parseOrderMessage(message = '') {
-    const result = { name: '', mobile: '', address: '', shoeModel: '', size: '', sellingPrice: '', deliveryCharge: '', unitPrice: '', extraCost: '', parcelId: '', orderType: detectOrderType(message) };
+    const result = { name: '', mobile: '', address: '', shoeModel: '', size: '', sellingPrice: '', deliveryCharge: '', unitPrice: '', extraCost: '', parcelId: '', orderId: '', description: '', note: '', orderType: detectOrderType(message) };
     for (const line of String(message || '').split(/\r?\n/)) {
       const match = line.match(/^\s*([^:：]+?)\s*[:：]\s*(.*?)\s*$/);
       if (!match) continue;

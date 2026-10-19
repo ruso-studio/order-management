@@ -43,3 +43,7 @@ npm start
 ```
 
 Open `http://localhost:3000`. The Node service provides the app locally and the separate status lookup; parcel creation still calls Steadfast from the browser.
+
+## Order ID, description, and note
+
+The optional Order ID / invoice field is written to column E and used as the Steadfast invoice. If blank, Apps Script keeps its normal increment-from-last-ID behavior. Item description is generated from the shoe, size, unit price, selling price, delivery charge, and extra cost; it remains editable and is sent as Steadfast `item_description`. The optional Note is sent as Steadfast `note`. These two text fields are not saved in the Current sheet because it has no columns for them.
