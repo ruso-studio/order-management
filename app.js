@@ -44,7 +44,6 @@ const fields = [
   "status",
   "orderId",
   "description",
-  "note",
 ];
 
 function cookie(name) {
