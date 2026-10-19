@@ -160,12 +160,13 @@ function findNextOrderRow(sheet) {
 
 function getNextOrderId(sheet, lastOccupiedRow) {
   if (lastOccupiedRow < ORDER_START_ROW) return 1;
-  const value = Number(
-    clean(sheet.getRange(lastOccupiedRow, 5).getDisplayValue()),
-  );
-  if (!Number.isFinite(value))
-    return 1000
-  return value + 1;
+  const ids = sheet
+    .getRange(ORDER_START_ROW, 5, lastOccupiedRow - ORDER_START_ROW + 1, 1)
+    .getDisplayValues()
+    .flat()
+    .map((value) => Number(clean(value)))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  return ids.length ? Math.max(...ids) + 1 : 1000;
 }
 
 function clean(value) {

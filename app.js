@@ -8,19 +8,16 @@ const APP_CONFIG = {
     "https://script.google.com/macros/s/AKfycbzh0cn8VSa2gEEjuAXiq5t3ULJzTctfixyCTGyiwPED5jU3PzuHKiPld1ctzA72JqGSiw/exec",
 };
 const STEADFAST_API_BASE_URL = "https://portal.packzy.com/api/v1";
-const STEADFAST_KEY_STORAGE = {
-  api: api_creds.apiKey,
-  secret: api_creds.apiSecret,
-};
+const STEADFAST_KEY_STORAGE = { api: "steadfast_api_key", secret: "steadfast_secret_key" };
 
 const PRESETS = {
   online: {
-    en: "To place an order please provide the following info.\n\nName:\nMobile:\nAddress:\nShoe:\nSize:\nPrice:\nDelivery amount:",
-    bn: "অর্ডারটি নিশ্চিত করতে অনুগ্রহ করে নিচের তথ্যগুলো দিন।\n\nনাম:\nমোবাইল:\nঠিকানা:\nজুতা:\nসাইজ:\nদাম:\nডেলিভারি চার্জ:",
+    en: "To place an order please provide the following info.\n\nName: \nMobile: \nAddress: \nShoe: \nSize: \nPrice: \nDelivery amount: ",
+    bn: "অর্ডারটি নিশ্চিত করতে অনুগ্রহ করে নিচের তথ্যগুলো দিন।\n\nনাম: \nমোবাইল: \nঠিকানা: \nজুতা: \nসাইজ: \nদাম: \nডেলিভারি চার্জ: ",
   },
   direct: {
-    en: "Direct Order\n\nShoe model:\nPrice:",
-    bn: "ডিরেক্ট অর্ডার\n\nজুতার মডেল:\nদাম:",
+    en: "Direct Order\n\nShoe model: \nPrice: ",
+    bn: "ডিরেক্ট অর্ডার\n\nজুতার মডেল: \nদাম: ",
   },
 };
 const state = {
@@ -44,6 +41,7 @@ const fields = [
   "status",
   "orderId",
   "description",
+  "note",
 ];
 
 function cookie(name) {
@@ -219,14 +217,26 @@ function collectPayload() {
 function updateDescription() {
   const field = $("description");
   if (field.dataset.edited) return;
-  field.value = [
+  const sellingPrice = Number($("sellingPrice").value || 0);
+  const deliveryCharge = Number($("deliveryCharge").value || 0);
+  const parts = [
+    sellingPrice + deliveryCharge > 0 && `COD amount: ${sellingPrice + deliveryCharge}`,
+    $("name").value.trim() && `Name: ${$("name").value.trim()}`,
+    $("mobile").value.trim() && `Mobile: ${$("mobile").value.trim()}`,
+    $("address").value.trim() && `Address: ${$("address").value.trim()}`,
     $("shoeModel").value.trim() && `Shoe: ${$("shoeModel").value.trim()}`,
     $("size").value.trim() && `Size: ${$("size").value.trim()}`,
-    $("unitPrice").value && `Unit price: ${$("unitPrice").value}`,
     $("sellingPrice").value && `Selling price: ${$("sellingPrice").value}`,
-    $("deliveryCharge").value && `Delivery: ${$("deliveryCharge").value}`,
-    $("extraCost").value && `Extra cost: ${$("extraCost").value}`,
-  ].filter(Boolean).join(" | ").slice(0, 255);
+    $("deliveryCharge").value && `Delivery amount: ${$("deliveryCharge").value}`,
+  ].filter(Boolean);
+  field.value = parts.join(" | ").slice(0, 255);
+}
+
+function getSteadfastCredentials() {
+  return {
+    apiKey: String(api_creds?.apiKey || sessionStorage.getItem(STEADFAST_KEY_STORAGE.api) || "").trim(),
+    secretKey: String(api_creds?.apiSecret || sessionStorage.getItem(STEADFAST_KEY_STORAGE.secret) || "").trim(),
+  };
 }
 
 async function submitOrder(event) {
@@ -235,8 +245,8 @@ async function submitOrder(event) {
   const payload = collectPayload();
   if (payload.createSteadfast) {
     if (
-      !sessionStorage.getItem(STEADFAST_KEY_STORAGE.api) ||
-      !sessionStorage.getItem(STEADFAST_KEY_STORAGE.secret)
+      !getSteadfastCredentials().apiKey ||
+      !getSteadfastCredentials().secretKey
     ) {
       toast(
         "Add your Steadfast API credentials in Settings before submitting this parcel.",
@@ -344,8 +354,7 @@ async function postToSheet(payload) {
 }
 
 async function createParcel(payload, invoice) {
-  const apiKey = sessionStorage.getItem(STEADFAST_KEY_STORAGE.api) || "";
-  const secretKey = sessionStorage.getItem(STEADFAST_KEY_STORAGE.secret) || "";
+  const { apiKey, secretKey } = getSteadfastCredentials();
   if (!apiKey || !secretKey)
     throw new Error(
       "Add your Steadfast API credentials in Settings before creating a parcel.",
@@ -366,7 +375,7 @@ async function createParcel(payload, invoice) {
   if (!Number.isFinite(codAmount) || codAmount < 0 || codAmount > 1000000)
     throw new Error("COD amount must be between 0 and 1,000,000.");
   const order = {
-    invoice: String(invoice),
+    invoice: String(payload.orderId || invoice),
     recipient_name: payload.name.trim().slice(0, 100),
     recipient_phone: phone,
     recipient_address: payload.address.trim().slice(0, 490),
@@ -470,7 +479,7 @@ function init() {
     );
   $("shoeModel").addEventListener("change", () => syncProductPrice(true));
   $("shoeModel").addEventListener("input", () => syncProductPrice(false));
-  ["shoeModel", "size", "unitPrice", "sellingPrice", "deliveryCharge", "extraCost"].forEach((id) => $(id).addEventListener("input", updateDescription));
+  ["name", "mobile", "address", "shoeModel", "size", "sellingPrice", "deliveryCharge"].forEach((id) => $(id).addEventListener("input", updateDescription));
   $("description").addEventListener("input", () => { $("description").dataset.edited = "true"; });
   $("unitPrice").addEventListener(
     "input",

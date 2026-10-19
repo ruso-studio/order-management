@@ -22,12 +22,13 @@ There is no installable trigger. Do not add one for order entry. Apps Script doe
 
 ## Configure Steadfast in the app
 
-1. Deploy the updated static app to GitHub Pages.
-2. Open the app and sign in.
-3. Open **Settings**, enter the API Key and Secret Key from the Steadfast merchant API settings, and save. The app retains them in `sessionStorage` for that browser session; closing the session clears them.
-4. Select an Online order and enable **Create Steadfast parcel** to submit the documented `POST https://portal.packzy.com/api/v1/create_order` request. The invoice is the next order ID returned by Apps Script. The app uses Steadfast's returned consignment ID, tracking code, tracking link, and status.
+1. Keep `cred.js` alongside `app.js` in the GitHub Pages deployment, exporting `password` and `api_creds` with `apiKey` and `apiSecret` fields. `cred.js` credentials take priority.
+2. Deploy the updated static app to GitHub Pages.
+3. Open the app and sign in.
+4. If `cred.js` credentials are unavailable, use **Settings** to enter backup keys; they are kept in `sessionStorage` for that browser session.
+5. Select an Online order and enable **Create Steadfast parcel** to submit the documented `POST https://portal.packzy.com/api/v1/create_order` request. The invoice uses the entered Order ID, or the generated ID when blank.
 
-The published frontend must not contain hard-coded API credentials. A direct browser request necessarily sends the keys to Steadfast from the user's browser; they are visible to that browser session and can be inspected by its user. Browser access to Steadfast also depends on the API allowing cross-origin requests from the Pages origin. If Steadfast blocks browser CORS, a direct request from a static Pages app cannot work; the API owner would need to allow the origin or the app would need a trusted server-side proxy.
+`cred.js` is shipped with the frontend, so its keys are visible to anyone who can access the deployed app; use this only if that exposure is acceptable. Settings are a session-only fallback. Browser access to Steadfast also depends on the API allowing cross-origin requests from the Pages origin.
 
 The Render/Node service is not involved in parcel creation. It remains available for the independent parcel status lookup and scraper.
 
@@ -46,4 +47,4 @@ Open `http://localhost:3000`. The Node service provides the app locally and the 
 
 ## Order ID, description, and note
 
-The optional Order ID / invoice field is written to column E and used as the Steadfast invoice. If blank, Apps Script keeps its normal increment-from-last-ID behavior. Item description is generated from the shoe, size, unit price, selling price, delivery charge, and extra cost; it remains editable and is sent as Steadfast `item_description`. The optional Note is sent as Steadfast `note`. These two text fields are not saved in the Current sheet because it has no columns for them.
+The optional Order ID / invoice field is written to column E and used as the Steadfast invoice. If blank, Apps Script uses one more than the greatest numeric ID already in the sheet. Item description is generated from the customer message details, address, and COD amount; it excludes unit cost. It remains editable and is sent as Steadfast `item_description`. The optional Note is sent as Steadfast `note`. These text fields are not saved in the Current sheet because it has no columns for them.
