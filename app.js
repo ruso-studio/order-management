@@ -218,9 +218,8 @@ function updateDescription() {
   const field = $("description");
   if (field.dataset.edited) return;
   const sellingPrice = Number($("sellingPrice").value || 0);
-  const deliveryCharge = Number($("deliveryCharge").value || 0);
   const parts = [
-    sellingPrice + deliveryCharge > 0 && `COD amount: ${sellingPrice + deliveryCharge}`,
+    sellingPrice > 0 && `COD amount: ${sellingPrice}`,
     $("name").value.trim() && `Name: ${$("name").value.trim()}`,
     $("mobile").value.trim() && `Mobile: ${$("mobile").value.trim()}`,
     $("address").value.trim() && `Address: ${$("address").value.trim()}`,
