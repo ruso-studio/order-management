@@ -3,63 +3,113 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Order Management</title>
+    <title>Order desk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div id="app">
       <section id="loginScreen" class="screen active">
-        <div class="card login-card">
-          <div class="brand-wrap">
-            <span class="brand-badge">OM</span>
-            <h1>Order Management</h1>
-          </div>
-
+        <div class="login-card">
+          <div class="brand-mark">OD</div>
+          <p class="eyebrow">Order operations</p>
+          <h1>Welcome back</h1>
+          <p class="muted login-copy">Sign in to open your order desk.</p>
           <form id="loginForm" class="stack-form">
-            <label>
-              <span>Username</span>
-              <input id="username" type="text" name="username" autocomplete="username" required />
-            </label>
-
-            <label>
-              <span>Password</span>
-              <input id="password" type="password" name="password" autocomplete="current-password" required />
-            </label>
-
-            <button type="submit" class="primary-button">Login</button>
+            <label><span>Username</span><input id="username" type="text" autocomplete="username" required /></label>
+            <label><span>Password</span><input id="password" type="password" autocomplete="current-password" required /></label>
+            <button type="submit" class="primary-button">Sign in <span>→</span></button>
           </form>
         </div>
       </section>
 
       <section id="mainScreen" class="screen">
         <header class="topbar">
-          <div>
-            <p class="eyebrow">Order desk</p>
-            <h2>New order</h2>
-          </div>
-          <button id="logoutBtn" class="ghost-button" type="button">Logout</button>
+          <div class="brand-inline"><div class="brand-mark small">OD</div><div><p class="eyebrow">Order operations</p><h1>Order desk</h1></div></div>
+          <div class="topbar-actions"><button id="settingsBtn" class="ghost-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 3.1-.2-.1a1.7 1.7 0 0 0-1.8.3l-.2.1h-3.6l-.1-.2a1.7 1.7 0 0 0-1.5-1l-.3.1-3.1-1.8.1-.2a1.7 1.7 0 0 0-.3-1.8l-.1-.2v-3.6l.2-.1a1.7 1.7 0 0 0 1-1.5l-.1-.3 1.8-3.1.2.1a1.7 1.7 0 0 0 1.8-.3l.2-.1h3.6l.1.2a1.7 1.7 0 0 0 1.5 1l.3-.1 3.1 1.8-.1.2a1.7 1.7 0 0 0 .3 1.8l.1.2v3.6z"/></svg>Settings</button><button id="logoutBtn" class="ghost-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3m9-8h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/></svg>Sign out</button></div>
         </header>
 
-        <div class="panel">
-          <label class="text-area-label" for="orderInput">Paste order message</label>
-          <textarea id="orderInput" rows="8" placeholder="name: Nafijul Islam&#10;phone: 01910186978&#10;Address: ..."></textarea>
-          <button id="parseButton" class="secondary-button" type="button">Parse order</button>
+        <div class="page-intro"><div><p class="eyebrow">ORDER ENTRY</p><h2>New order</h2></div></div>
+
+        <div class="order-type-card">
+          <div><span class="step-label">ORDER TYPE</span><strong>Order type</strong></div>
+          <div class="segmented" role="group" aria-label="Order type"><button id="onlineTypeBtn" type="button" class="selected">Online order</button><button id="directTypeBtn" type="button">Direct sale</button></div>
         </div>
 
-        <form id="orderForm" class="order-form">
-          <div id="fieldGrid" class="field-grid"></div>
+        <div class="workspace-grid">
+          <aside class="message-column">
+            <div class="section-heading"><div><span class="step-label">MESSAGE PRESETS</span><h3>Copy a template</h3></div><span class="optional-tag">EN / বাংলা</span></div>
+            <article class="snippet-card">
+              <div class="snippet-top"><span class="snippet-type online-dot">ONLINE ORDER</span><div class="snippet-actions"><button class="language-button" data-preset="online" type="button">EN · বাংলা</button><button class="copy-button" data-copy="online" type="button" aria-label="Copy online order template"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg><span>Copy</span></button></div></div>
+              <pre id="onlineSnippet"></pre>
+            </article>
+            <article class="snippet-card">
+              <div class="snippet-top"><span class="snippet-type direct-dot">DIRECT SALE</span><div class="snippet-actions"><button class="language-button" data-preset="direct" type="button">EN · বাংলা</button><button class="copy-button" data-copy="direct" type="button" aria-label="Copy direct sale template"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg><span>Copy</span></button></div></div>
+              <pre id="directSnippet"></pre>
+            </article>
+          </aside>
 
-          <div class="submit-row">
-            <button id="submitOrderBtn" type="submit" class="primary-button full-width">
-              Submit order
-            </button>
-          </div>
+          <main class="form-column">
+            <section class="message-panel">
+              <div class="panel-heading"><label for="orderInput"><span class="step-label">MESSAGE</span><strong>Paste order message</strong></label></div>
+              <textarea id="orderInput" rows="8" placeholder="Name:&#10;Mobile:&#10;Address:&#10;Shoe:&#10;Size:&#10;Price:&#10;Delivery amount:"></textarea>
+              <div class="message-footer"><button id="parseButton" class="secondary-button" type="button">Parse message <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M8 17h9V8"/></svg></button></div>
+            </section>
+
+            <form id="orderForm" class="order-form">
+              <section class="details-panel">
+                <div class="panel-heading"><div><span class="step-label">ORDER DETAILS</span><strong>Order details</strong></div></div>
+                <div class="field-grid">
+                  <label class="form-field" data-online><span>Customer name</span><input id="name" type="text" placeholder="Full name" /></label>
+                  <label class="form-field" data-online><span>Mobile number</span><input id="mobile" type="text" inputmode="tel" placeholder="01XXXXXXXXX" /></label>
+                  <label class="form-field full-field" data-online><span>Delivery address</span><textarea id="address" rows="2" placeholder="House, road, area, city"></textarea></label>
+                  <label class="form-field"><span>Shoe model</span><input id="shoeModel" type="text" list="productOptions" placeholder="Choose or type a model" /><datalist id="productOptions"></datalist></label>
+                  <label class="form-field"><span>Size <small>(optional)</small></span><input id="size" type="text" placeholder="e.g. 41" /></label>
+                  <label class="form-field"><span>Unit price <small>(price chart)</small></span><input id="unitPrice" type="number" min="0" placeholder="Raw product cost" /></label>
+                  <label class="form-field"><span>Selling price <small>(customer price)</small></span><input id="sellingPrice" type="number" min="0" placeholder="Price" /></label>
+                  <label class="form-field" data-online><span>Delivery charge</span><input id="deliveryCharge" type="number" min="0" placeholder="0" /></label>
+                  <label class="form-field"><span>Extra cost <small>(if any)</small></span><input id="extraCost" type="number" min="0" placeholder="0" /></label>
+                  <label class="form-field"><span>Parcel ID <small>(optional)</small></span><input id="parcelId" type="text" placeholder="Existing consignment ID" /></label>
+                  <label class="form-field"><span>Status <small>(optional)</small></span><input id="status" type="text" placeholder="Pending, delivered…" /></label>
+                </div>
+                <div class="price-note"><span class="price-icon">৳</span><strong>Price list</strong><span id="priceChartStatus" aria-live="polite"></span><button id="refreshPrices" type="button" class="text-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 2M4 16l2 2a7 7 0 0 0 12.4-3"/></svg>Refresh</button></div>
+              </section>
+
+              <label class="steadfast-card"><span class="steadfast-check"><input id="createSteadfast" type="checkbox" /><i></i></span><span class="steadfast-copy"><b>Create Steadfast parcel</b></span><span class="courier-pill">STEADFAST</span></label>
+              <button id="submitOrderBtn" type="submit" class="primary-button submit-button">Save order <span>→</span></button>
+            </form>
+          </main>
+        </div>
+      </section>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="parcelModal" class="modal-backdrop" role="presentation" hidden>
+      <section class="parcel-modal" role="dialog" aria-modal="true" aria-labelledby="parcelModalTitle" aria-describedby="parcelModalDescription">
+        <div class="modal-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></div>
+        <p class="modal-eyebrow">STEADFAST</p>
+        <h2 id="parcelModalTitle">Parcel created</h2>
+        <p id="parcelModalDescription" class="modal-description">Your parcel has been created successfully.</p>
+        <div class="parcel-reference"><span>Parcel ID</span><strong id="parcelIdValue"></strong></div>
+        <div class="parcel-reference tracking-reference"><span>Tracking code</span><strong id="trackingCodeValue"></strong></div>
+        <a id="parcelTrackingLink" class="tracking-link" href="https://steadfast.com.bd/tracking" target="_blank" rel="noopener noreferrer">Open Steadfast tracking <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6m-9 5 9-9M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"/></svg></a>
+        <p id="parcelSyncMessage" class="modal-sync-message"></p>
+        <button id="parcelModalOk" class="primary-button modal-ok" type="button">OK</button>
+      </section>
+    </div>
+    <div id="settingsModal" class="modal-backdrop" role="presentation" hidden>
+      <section class="parcel-modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <p class="modal-eyebrow">APP SETTINGS</p>
+        <h2 id="settingsTitle">Steadfast API</h2>
+        <p class="modal-description">Credentials are kept in this browser session and cleared when the session ends.</p>
+        <form id="settingsForm" class="stack-form">
+          <label><span>API key</span><input id="steadfastApiKey" type="password" autocomplete="off" required /></label>
+          <label><span>Secret key</span><input id="steadfastSecretKey" type="password" autocomplete="off" required /></label>
+          <div class="settings-actions"><button id="settingsCancel" class="ghost-button" type="button">Cancel</button><button class="primary-button" type="submit">Save credentials</button></div>
         </form>
       </section>
     </div>
-
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
     <script src="utils/orderFieldConfig.js"></script>
     <script src="utils/orderParser.js"></script>
     <script src="app.js"></script>

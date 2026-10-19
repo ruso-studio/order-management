@@ -1,93 +1,32 @@
 (function (global) {
   const FIELD_CONFIG = {
-    DEFAULT_FIELD_SEQUENCE: ['name', 'mobile', 'address', 'shoeModel', 'size', 'price'],
-    FIELD_ORDER: ['name', 'mobile', 'address', 'shoeModel', 'size', 'price'],
-    FIELD_OPTIONS: [
-      { key: 'name', label: 'Name' },
-      { key: 'mobile', label: 'Mobile' },
-      { key: 'address', label: 'Address' },
-      { key: 'shoeModel', label: 'Shoe model' },
-      { key: 'size', label: 'Size' },
-      { key: 'price', label: 'Price' },
-      { key: 'deliveryChargePaid', label: 'Delivery charge paid' },
-      { key: 'accessories', label: 'Additional accessories' },
-      { key: 'orderDate', label: 'Order date' },
-    ],
-    FIELD_DEFINITIONS: {
-      name: {
-        label: 'Name',
-        type: 'text',
-        placeholder: 'Customer name',
-        required: true,
-      },
-      mobile: {
-        label: 'Mobile',
-        type: 'text',
-        placeholder: 'Customer no',
-        required: true,
-      },
-      address: {
-        label: 'Address',
-        type: 'textarea',
-        placeholder: 'Delivery address',
-        required: true,
-      },
-      shoeModel: {
-        label: 'Shoe model',
-        type: 'text',
-        placeholder: 'Product',
-        required: true,
-      },
-      size: {
-        label: 'Size',
-        type: 'text',
-        placeholder: 'Size',
-        required: true,
-      },
-      price: {
-        label: 'Price',
-        type: 'text',
-        placeholder: 'Order price',
-        required: true,
-      },
-      deliveryChargePaid: {
-        label: 'Delivery charge paid',
-        type: 'toggle',
-        required: false,
-        defaultValue: false,
-      },
-      accessories: {
-        label: 'Additional accessories',
-        type: 'checkbox-group',
-        required: false,
-        options: ['Lace', 'Socks', 'Bag', 'Box'],
-      },
-      orderDate: {
-        label: 'Order date',
-        type: 'date',
-        required: false,
-        defaultValue: '2025-01-01',
-      },
+    ORDER_TYPES: ['online', 'direct'],
+    ORDER_ROWS: { first: 5, last: 500, occupiedBy: 'shoeModel' },
+    FIELDS: {
+      name: { label: 'Customer name', column: 'A', requiredForSteadfast: true, onlineOnly: true },
+      mobile: { label: 'Mobile', column: 'B', requiredForSteadfast: true, onlineOnly: true },
+      shoeModel: { label: 'Shoe model', column: 'C', exactPriceLookup: true },
+      unitPrice: { label: 'Unit price', column: 'D', source: 'Price chart!A4:B100' },
+      orderId: { label: 'ID', column: 'E', incrementFor: ['online', 'direct'] },
+      deliveryCharge: { label: 'Delivery charge', column: 'F' },
+      extraCost: { label: 'Extra cost (If any)', column: 'G' },
+      parcelId: { label: 'Parcel ID', column: 'H' },
+      sellingPrice: { label: 'Selling price', column: 'I' },
+      profit: { label: 'Profit', column: 'J', formula: true, write: false },
+      steadfastLink: { label: 'Steadfast link', column: 'K', formula: true, write: false },
+      status: { label: 'Status', column: 'L' },
+      address: { label: 'Delivery address', requiredForSteadfast: true, onlineOnly: true },
+      size: { label: 'Size' },
     },
-    GOOGLE_SHEET_FIELD_MAP: {
-      name: 'Customer name',
-      mobile: 'Customer no',
-      address: 'Delivery address',
-      shoeModel: 'Product',
-      size: 'Size',
-      price: 'Order Price',
-      deliveryChargePaid: 'Delivery charge paid status',
-      accessories: 'Additional accessories',
-      orderDate: 'Order date',
+    PRICE_LIST: { sheet: 'Price chart', range: 'A4:B100', productColumn: 'A', unitPriceColumn: 'B' },
+    STEADFAST: {
+      createOrderEndpoint: 'https://portal.packzy.com/api/v1/create_order',
+      invoiceField: 'orderId',
+      credentialStorage: 'sessionStorage',
     },
-    ACCESSORY_OPTIONS: ['Lace', 'Socks', 'Bag', 'Box'],
   };
-
   global.ORDER_FIELD_CONFIG = FIELD_CONFIG;
   global.ORDER_MANAGEMENT = global.ORDER_MANAGEMENT || {};
   global.ORDER_MANAGEMENT.config = FIELD_CONFIG;
-
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = FIELD_CONFIG;
-  }
+  if (typeof module !== 'undefined' && module.exports) module.exports = FIELD_CONFIG;
 })(typeof window !== 'undefined' ? window : globalThis);

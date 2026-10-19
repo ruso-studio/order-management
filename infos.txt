@@ -1,31 +1,41 @@
-Google sheet link = "https://docs.google.com/spreadsheets/d/1_3r-eRoJKzeS985_7Bc1Sruv28q1WOsRstFo_K5a2-E/edit?gid=204875660#gid=204875660"
-sample message = "name: nafijul islam
-phone:01910186978
-Address: Shoni akhra Nurpur 1 number road matrikunjonibash 1333 Dhaka1236
-Size:41
-shoe name : supreme milk red 
-pp: 2550"
+Order entry maintenance notes
+============================
 
-default order of fields in the ui = 
- name
- mobile
- address
- shoe model
- Size
- price
+Scope
+-----
+- Frontend: index.html, styles.css, app.js.
+- Bilingual message parsing: utils/orderParser.js.
+- Order/sheet schema reference: utils/orderFieldConfig.js.
+- Google Apps Script: apps-script/Code.gs; matching schema reference: apps-script/sheetConfig.gs.
+- Separate status lookup scraper: server.js and utils/steadfast_scrapper.js. It is not part of order entry or courier creation.
 
+Google Sheet
+------------
+- Order tab: Current. Rows 5–500. Column C (Product) determines whether a row is occupied.
+- A:L: Name | Mobile | Product | Unit price | ID | Delivery charge | Extra cost (If any) | Parcel ID | Selling price | Profit | Steadfast link | Status.
+- J (Profit) and K (Steadfast link) are formulas. Apps Script writes A:I and L only.
+- IDs increment for Direct and Online orders. A parcel invoice uses the returned new order ID.
+- A blank product is stored as `Unspecified product` to preserve the column C occupancy marker.
+- Price list: `Price chart!A4:B100` (product name and unit price); cached only in browser memory until refreshed.
 
-the order submitting form shoould have some extra optional fields ... 
-1 is delivary charge paid , toggle button
-2nd isadditional accessories, checkbox fields for these -> lace, socks, bag, box
-3rd is order date, default value today
+Order behavior
+--------------
+- The order type switch supports Online and Direct; pasted message text detects type automatically. English and Bengali labels are parsed.
+- Direct blank customer name becomes `Direct sell`. Model matching is exact (case-insensitive); a selected catalog item populates its unit price.
+- Online orders may create a parcel. The browser calls `POST https://portal.packzy.com/api/v1/create_order` with `Api-Key`, `Secret-Key`, and `Content-Type: application/json` headers.
+- Payload keys follow Steadfast's guide: invoice, recipient_name, recipient_phone, recipient_address, cod_amount, and item_description. COD amount is selling price plus delivery charge.
+- Credentials are entered in Settings and stored in sessionStorage, never in app.js or Apps Script. Static browser calls mean the user can inspect keys during that browser session. Direct browser calls require Steadfast to allow the GitHub Pages origin via CORS.
+- After Apps Script saves an order and returns its row/ID, the app makes the Steadfast call. On success it posts the returned consignment ID and status via `action: updateParcel`; J/K formulas are not altered. A confirmation modal shows the returned consignment ID, tracking code, and tracking link.
+- If courier creation fails after order save, the order stays saved and the app reports the parcel error.
 
- Google sheet table header sayng the columns:
- Order ID	Customer name	Product	Size	Delivary address	Delivary charge paid status	Order Price	Order date	Additional accessories 	Package ready	Out for delivary	Order status	Delivary ID	Delivary status link	Order delivered date	Customer no	Note
+Apps Script deployment
+----------------------
+- Deploy apps-script/Code.gs as a Web App, Execute as: Me, access: Anyone. `app.js` contains the deployed `/exec` URL.
+- Apps Script reads `Price chart` and writes `Current`; there is no order-entry trigger and no Steadfast request in Apps Script.
+- After code changes, deploy a new Web App version using Manage deployments.
 
- (serially from A to Q), you get the corresponding columns names ... 
- here Size	Delivary charge paid status	Additional accessories are dropdown columns ... 
-
-keep every thing as a utility const so that we can easilyt update/modify main tain them.
-
-give me full path to deply and run and test the app. in md files
+Steadfast credentials
+---------------------
+- Enter API Key and Secret Key using the app Settings button. The values stay in current-browser sessionStorage.
+- Do not copy credentials into published source, Apps Script, or the checked-in notes. `steadfast api doc.txt` is ignored by Git because it contains credentials.
+- Parcel creation does not use the Node/Render service. That service remains for the separate status lookup/scraper.

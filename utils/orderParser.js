@@ -1,103 +1,55 @@
 (function (global) {
-  const config = global.ORDER_FIELD_CONFIG || {
-    DEFAULT_FIELD_SEQUENCE: ['name', 'mobile', 'address', 'shoeModel', 'size', 'price'],
-    FIELD_ORDER: ['name', 'mobile', 'address', 'shoeModel', 'size', 'price'],
-    ACCESSORY_OPTIONS: ['Lace', 'Socks', 'Bag', 'Box'],
+  const FIELD_ALIASES = {
+    name: ['name', 'customer name', 'নাম', 'ক্রেতার নাম'],
+    mobile: ['mobile', 'phone', 'phone number', 'contact', 'মোবাইল', 'মোবাইল নম্বর', 'ফোন', 'ফোন নম্বর'],
+    address: ['address', 'delivery address', 'ঠিকানা', 'ডেলিভারি ঠিকানা'],
+    shoeModel: ['shoe', 'shoe model', 'shoe name', 'product', 'model', 'জুতা', 'জুতার মডেল', 'মডেল'],
+    size: ['size', 'সাইজ'],
+    sellingPrice: ['price', 'selling price', 'amount', 'দাম', 'মূল্য', 'বিক্রয় মূল্য'],
+    deliveryCharge: ['delivery amount', 'delivery charge', 'delivery fee', 'ডেলিভারি চার্জ', 'ডেলিভারি খরচ'],
+    unitPrice: ['unit price', 'raw price', 'ক্রয় মূল্য'],
+    extraCost: ['extra cost', 'অতিরিক্ত খরচ'],
+    parcelId: ['parcel id', 'consignment id', 'পার্সেল আইডি'],
   };
-
-  const makeDefaultOrder = () => ({
-    name: '',
-    mobile: '',
-    address: '',
-    shoeModel: '',
-    size: '',
-    price: '',
-    deliveryChargePaid: false,
-    accessories: [],
-    orderDate: getTodayIso(),
-  });
-
-  function getTodayIso() {
-    const now = new Date();
-    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  }
-
-  function normalizeText(value = '') {
-    return String(value).trim();
-  }
-
-  function normalizeSizeValue(value = '') {
-    const raw = normalizeText(value);
-    if (!raw) return '';
-    const parsed = Number.parseInt(raw.replace(/[^0-9-]/g, ''), 10);
-    return Number.isInteger(parsed) ? parsed : raw;
-  }
-
-  function detectFieldKey(key) {
-    const cleanedKey = String(key || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-    const patterns = {
-      name: ['name', 'customer name'],
-      mobile: ['phone', 'mobile', 'customer no', 'phone number', 'contact', 'email'],
-      address: ['address', 'delivery address', 'delivary address', 'company', 'location'],
-      shoeModel: ['shoe name', 'shoe model', 'product', 'model', 'description'],
-      size: ['size'],
-      price: ['price', 'pp', 'amount'],
-      deliveryChargePaid: ['delivery charge paid', 'delivery charge', 'charge paid', 'paid status'],
-      accessories: ['additional accessories', 'accessories'],
-      orderDate: ['order date', 'date'],
-    };
-
-    for (const [fieldKey, possiblePatterns] of Object.entries(patterns)) {
-      if (possiblePatterns.some((pattern) => cleanedKey === pattern || cleanedKey.includes(pattern))) {
-        return fieldKey;
-      }
+  const clean = (value) => String(value || '').trim().toLocaleLowerCase().replace(/[：]/g, ':').replace(/\s+/g, ' ');
+  const normalizeDigits = (value) => String(value || '').replace(/[০-৯]/g, (digit) => String('০১২৩৪৫৬৭৮৯'.indexOf(digit)));
+  const normalizeAmount = (value) => normalizeDigits(value).replace(/[,৳\s]/g, '').replace(/[^0-9.-]/g, '');
+  function detectFieldKey(label) {
+    const key = clean(label).replace(/[:\-]+$/, '');
+    for (const [field, aliases] of Object.entries(FIELD_ALIASES)) {
+      if (aliases.some((alias) => key === clean(alias))) return field;
     }
-
     return null;
   }
-
+  function detectOrderType(message) {
+    const text = String(message || '').toLocaleLowerCase();
+    if (/direct\s*(sale|order)|direct sell|ড(?:ি|াই)রেক্ট\s*(সেল|অর্ডার)|সরাসরি\s*(বিক্রি|অর্ডার)/i.test(text)) return 'direct';
+    if (/to place an order|online order|অর্ডারটি নিশ্চিত|অর্ডার করতে|অর্ডার দিতে/i.test(text)) return 'online';
+    const lines = String(message).split(/\r?\n/);
+    const hasCustomerFields = ['name', 'mobile', 'address'].some((field) => lines.some((line) => {
+      const match = line.match(/^\s*([^:：]+)\s*[:：]/);
+      return match && detectFieldKey(match[1]) === field;
+    }));
+    if (hasCustomerFields) return 'online';
+    const hasShoeAndPrice = ['shoeModel', 'sellingPrice'].every((field) => lines.some((line) => {
+      const match = line.match(/^\s*([^:：]+)\s*[:：]/);
+      return match && detectFieldKey(match[1]) === field;
+    }));
+    return hasShoeAndPrice ? 'direct' : 'online';
+  }
   function parseOrderMessage(message = '') {
-    const parsed = makeDefaultOrder();
-    const sourceText = String(message || '');
-    const lines = sourceText
-      .split(/\r?\n/)
-      .map((line) => normalizeText(line))
-      .filter(Boolean);
-
-    if (!lines.length) {
-      return parsed;
+    const result = { name: '', mobile: '', address: '', shoeModel: '', size: '', sellingPrice: '', deliveryCharge: '', unitPrice: '', extraCost: '', parcelId: '', orderType: detectOrderType(message) };
+    for (const line of String(message || '').split(/\r?\n/)) {
+      const match = line.match(/^\s*([^:：]+?)\s*[:：]\s*(.*?)\s*$/);
+      if (!match) continue;
+      const field = detectFieldKey(match[1]);
+      if (field) result[field] = ['sellingPrice', 'deliveryCharge', 'unitPrice', 'extraCost'].includes(field) ? normalizeAmount(match[2]) : field === 'mobile' ? normalizeDigits(match[2].trim()) : match[2].trim();
     }
-
-    const fieldKeys = [...(config.FIELD_ORDER || config.DEFAULT_FIELD_SEQUENCE || [])];
-    const processableLines = lines.slice(0, fieldKeys.length);
-
-    processableLines.forEach((line, index) => {
-      const defaultFieldKey = fieldKeys[index % fieldKeys.length] || 'name';
-      const explicitMatch = line.match(/^([^:\n]+?)\s*[:\-]\s*(.+)$/);
-      const candidateKey = explicitMatch ? detectFieldKey(explicitMatch[1].toLowerCase()) : defaultFieldKey;
-      const fieldKey = candidateKey && fieldKeys.includes(candidateKey) ? candidateKey : defaultFieldKey;
-      const rawValue = explicitMatch ? normalizeText(explicitMatch[2]) : line;
-      const value = fieldKey === 'size' ? normalizeSizeValue(rawValue) : rawValue;
-      parsed[fieldKey] = value;
-    });
-
-    return parsed;
+    return result;
   }
-
-  const ORDER_PARSER = {
-    getTodayIso,
-    normalizeText,
-    normalizeSizeValue,
-    detectFieldKey,
-    parseOrderMessage,
-    buildDefaultOrder: makeDefaultOrder,
-  };
-
-  global.ORDER_PARSER = ORDER_PARSER;
+  const api = { FIELD_ALIASES, detectFieldKey, detectOrderType, parseOrderMessage };
+  global.ORDER_PARSER = api;
   global.ORDER_MANAGEMENT = global.ORDER_MANAGEMENT || {};
-  global.ORDER_MANAGEMENT.parser = ORDER_PARSER;
-
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ORDER_PARSER;
-  }
+  global.ORDER_MANAGEMENT.parser = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,547 +1,526 @@
+
 const APP_CONFIG = {
-  LOGIN_USERNAME: 'admin',
-  LOGIN_PASSWORD: 'order123',
-  COOKIE_NAME: 'order_management_auth',
+  LOGIN_USERNAME: "admin",
+  LOGIN_PASSWORD: env.password,
+  COOKIE_NAME: "order_management_auth",
   COOKIE_DAYS: 7,
-  SHEET_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyHCq0Wb4ADTIH1XX14dcL3Dlr8EHnwlOVxDs2Nw_RyvbFmGcTT86GW_B8Dhaud7Swc6A/exec',
+  SHEET_WEB_APP_URL:
+    "https://script.google.com/macros/s/AKfycbzh0cn8VSa2gEEjuAXiq5t3ULJzTctfixyCTGyiwPED5jU3PzuHKiPld1ctzA72JqGSiw/exec",
+};
+const STEADFAST_API_BASE_URL = "https://portal.packzy.com/api/v1";
+const STEADFAST_KEY_STORAGE = {
+  api: env.api_key,
+  secret: env.secret_key,
 };
 
-const ORDER_FIELD_CONFIG = (typeof window !== 'undefined' && window.ORDER_FIELD_CONFIG)
-  || (typeof globalThis !== 'undefined' && globalThis.ORDER_FIELD_CONFIG)
-  || {
-    DEFAULT_FIELD_SEQUENCE: ['name', 'mobile', 'address', 'shoeModel', 'size', 'price'],
-    FIELD_ORDER: ['name', 'mobile', 'address', 'shoeModel', 'size', 'price'],
-    FIELD_OPTIONS: [
-      { key: 'name', label: 'Name' },
-      { key: 'mobile', label: 'Mobile' },
-      { key: 'address', label: 'Address' },
-      { key: 'shoeModel', label: 'Shoe model' },
-      { key: 'size', label: 'Size' },
-      { key: 'price', label: 'Price' },
-      { key: 'deliveryChargePaid', label: 'Delivery charge paid' },
-      { key: 'accessories', label: 'Additional accessories' },
-      { key: 'orderDate', label: 'Order date' },
-    ],
-    FIELD_DEFINITIONS: {
-      name: { label: 'Name', type: 'text', placeholder: 'Customer name', required: true },
-      mobile: { label: 'Mobile', type: 'text', placeholder: 'Customer no', required: true },
-      address: { label: 'Address', type: 'textarea', placeholder: 'Delivery address', required: true },
-      shoeModel: { label: 'Shoe model', type: 'text', placeholder: 'Product', required: true },
-      size: { label: 'Size', type: 'text', placeholder: 'Size', required: true },
-      price: { label: 'Price', type: 'text', placeholder: 'Order price', required: true },
-      deliveryChargePaid: { label: 'Delivery charge paid', type: 'toggle', required: false, defaultValue: false },
-      accessories: { label: 'Additional accessories', type: 'checkbox-group', required: false, options: ['Lace', 'Socks', 'Bag', 'Box'] },
-      orderDate: { label: 'Order date', type: 'date', required: false, defaultValue: UTILS_GET_TODAY_ISO() },
-    },
-    GOOGLE_SHEET_FIELD_MAP: {
-      name: 'Customer name',
-      mobile: 'Customer no',
-      address: 'Delivery address',
-      shoeModel: 'Product',
-      size: 'Size',
-      price: 'Order Price',
-      deliveryChargePaid: 'Delivery charge paid status',
-      accessories: 'Additional accessories',
-      orderDate: 'Order date',
-    },
-    ACCESSORY_OPTIONS: ['Lace', 'Socks', 'Bag', 'Box'],
-  };
-
-const DEFAULT_FIELD_SEQUENCE = ORDER_FIELD_CONFIG.DEFAULT_FIELD_SEQUENCE || ['name', 'mobile', 'address', 'shoeModel', 'size', 'price'];
-
-const UTILS = {
-  FIELD_ORDER: [...(ORDER_FIELD_CONFIG.FIELD_ORDER || DEFAULT_FIELD_SEQUENCE)],
-  FIELD_OPTIONS: ORDER_FIELD_CONFIG.FIELD_OPTIONS || [
-    { key: 'name', label: 'Name' },
-    { key: 'mobile', label: 'Mobile' },
-    { key: 'address', label: 'Address' },
-    { key: 'shoeModel', label: 'Shoe model' },
-    { key: 'size', label: 'Size' },
-    { key: 'price', label: 'Price' },
-    { key: 'deliveryChargePaid', label: 'Delivery charge paid' },
-    { key: 'accessories', label: 'Additional accessories' },
-    { key: 'orderDate', label: 'Order date' },
-  ],
-  FIELD_DEFINITIONS: ORDER_FIELD_CONFIG.FIELD_DEFINITIONS || {
-    name: { label: 'Name', type: 'text', placeholder: 'Customer name', required: true },
-    mobile: { label: 'Mobile', type: 'text', placeholder: 'Customer no', required: true },
-    address: { label: 'Address', type: 'textarea', placeholder: 'Delivery address', required: true },
-    shoeModel: { label: 'Shoe model', type: 'text', placeholder: 'Product', required: true },
-    size: { label: 'Size', type: 'text', placeholder: 'Size', required: true },
-    price: { label: 'Price', type: 'text', placeholder: 'Order price', required: true },
-    deliveryChargePaid: { label: 'Delivery charge paid', type: 'toggle', required: false, defaultValue: false },
-    accessories: { label: 'Additional accessories', type: 'checkbox-group', required: false, options: ['Lace', 'Socks', 'Bag', 'Box'] },
-    orderDate: { label: 'Order date', type: 'date', required: false, defaultValue: UTILS_GET_TODAY_ISO() },
+const PRESETS = {
+  online: {
+    en: "To place an order please provide the following info.\n\nName:\nMobile:\nAddress:\nShoe:\nSize:\nPrice:\nDelivery amount:",
+    bn: "অর্ডারটি নিশ্চিত করতে অনুগ্রহ করে নিচের তথ্যগুলো দিন।\n\nনাম:\nমোবাইল:\nঠিকানা:\nজুতা:\nসাইজ:\nদাম:\nডেলিভারি চার্জ:",
   },
-  GOOGLE_SHEET_FIELD_MAP: ORDER_FIELD_CONFIG.GOOGLE_SHEET_FIELD_MAP || {
-    name: 'Customer name',
-    mobile: 'Customer no',
-    address: 'Delivery address',
-    shoeModel: 'Product',
-    size: 'Size',
-    price: 'Order Price',
-    deliveryChargePaid: 'Delivery charge paid status',
-    accessories: 'Additional accessories',
-    orderDate: 'Order date',
-  },
-  ACCESSORY_OPTIONS: ORDER_FIELD_CONFIG.ACCESSORY_OPTIONS || ['Lace', 'Socks', 'Bag', 'Box'],
-
-  normalizeText(value = '') {
-    return String(value).trim();
-  },
-
-  safeLower(value = '') {
-    return String(value).toLowerCase().trim();
-  },
-
-  getCookie(name) {
-    const cookies = document.cookie ? document.cookie.split('; ') : [];
-    const match = cookies.find((cookie) => cookie.startsWith(`${name}=`));
-    return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null;
-  },
-
-  setCookie(name, value, days) {
-    const expiry = new Date();
-    expiry.setTime(expiry.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expiry.toUTCString()}; path=/; SameSite=Lax`;
-  },
-
-  deleteCookie(name) {
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
-  },
-
-  buildDefaultOrder() {
-    const today = UTILS_GET_TODAY_ISO();
-    return {
-      name: '',
-      mobile: '',
-      address: '',
-      shoeModel: '',
-      size: '',
-      price: '',
-      deliveryChargePaid: false,
-      accessories: [],
-      orderDate: today,
-    };
-  },
-
-  normalizeNumericValue(value = '') {
-    const raw = UTILS.normalizeText(value);
-    if (!raw) return '';
-    const sanitized = raw.replace(/[^0-9.-]/g, '');
-    if (!sanitized || sanitized === '-' || sanitized === '.') return '';
-    const parsed = Number.parseInt(sanitized, 10);
-    return Number.isInteger(parsed) ? parsed : '';
-  },
-
-  normalizeSizeValue(value = '') {
-    return UTILS.normalizeNumericValue(value);
-  },
-
-  parseOrderMessage(message = '') {
-    const parsed = UTILS.buildDefaultOrder();
-    const sourceText = String(message || '');
-    const lines = sourceText
-      .split(/\r?\n/)
-      .map((line) => UTILS.normalizeText(line))
-      .filter(Boolean);
-
-    if (!lines.length) {
-      state.formRows = buildDefaultFormRows(parsed);
-      return parsed;
-    }
-
-    const supportedFieldCount = UTILS.FIELD_ORDER.length;
-    const processableLines = lines.slice(0, supportedFieldCount);
-
-    processableLines.forEach((line, index) => {
-      const defaultFieldKey = DEFAULT_FIELD_SEQUENCE[index % DEFAULT_FIELD_SEQUENCE.length] || 'name';
-      const explicitMatch = line.match(/^([^:\n]+?)\s*[:\-]\s*(.+)$/);
-      const fieldKey = explicitMatch ? UTILS.detectFieldKey(explicitMatch[1].toLowerCase()) : defaultFieldKey;
-      const targetField = (fieldKey && UTILS.FIELD_ORDER.includes(fieldKey)) ? fieldKey : defaultFieldKey;
-      const rawValue = explicitMatch ? UTILS.normalizeText(explicitMatch[2]) : line;
-      const value = (targetField === 'size' || targetField === 'price')
-        ? UTILS.normalizeNumericValue(rawValue)
-        : rawValue;
-
-      parsed[targetField] = value;
-    });
-
-    state.formRows = processableLines.map((line, index) => ({
-      id: `parsed-${index}`,
-      fieldKey: DEFAULT_FIELD_SEQUENCE[index % DEFAULT_FIELD_SEQUENCE.length] || 'name',
-      value: line,
-    }));
-
-    return parsed;
-  },
-
-  detectFieldKey(key) {
-    const cleanedKey = String(key || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-    const fieldPatterns = {
-      name: ['name', 'customer name'],
-      mobile: ['phone', 'mobile', 'customer no', 'phone number', 'contact', 'email'],
-      address: ['address', 'delivery address', 'delivary address', 'company', 'location'],
-      shoeModel: ['shoe name', 'shoe model', 'product', 'model', 'description'],
-      size: ['size'],
-      price: ['price', 'pp', 'amount'],
-      deliveryChargePaid: ['delivery charge paid', 'delivery charge', 'charge paid', 'paid status'],
-      accessories: ['additional accessories', 'accessories'],
-      orderDate: ['order date', 'date'],
-    };
-
-    for (const [fieldKey, patterns] of Object.entries(fieldPatterns)) {
-      if (patterns.some((pattern) => cleanedKey === pattern || cleanedKey.includes(pattern))) {
-        return fieldKey;
-      }
-    }
-
-    return null;
-  },
-
-  extractAccessories(value) {
-    const selected = [];
-    UTILS.ACCESSORY_OPTIONS.forEach((option) => {
-      const normalizedOption = option.toLowerCase();
-      if (new RegExp(normalizedOption, 'i').test(value) || value.toLowerCase().includes(normalizedOption.toLowerCase())) {
-        selected.push(option);
-      }
-    });
-    return selected;
-  },
-
-  normalizeDateInput(value) {
-    const raw = UTILS.normalizeText(value);
-    if (!raw) return null;
-
-    const match = raw.match(/(\d{4}-\d{2}-\d{2})|((\d{1,2})\/(\d{1,2})\/(\d{2,4}))/);
-    if (!match) return null;
-
-    const isoCandidate = match[1] || UTILS.convertSlashDateToIso(match[2]);
-    return isoCandidate || null;
-  },
-
-  convertSlashDateToIso(value) {
-    if (!value) return null;
-    const parts = value.split('/');
-    if (parts.length !== 3) return null;
-    const [day, month, year] = parts;
-    const fullYear = year.length === 2 ? `20${year}` : year;
-    return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  direct: {
+    en: "Direct Order\n\nShoe model:\nPrice:",
+    bn: "ডিরেক্ট অর্ডার\n\nজুতার মডেল:\nদাম:",
   },
 };
-
-globalThis.UTILS = UTILS;
-
-function UTILS_GET_TODAY_ISO() {
-  const date = new Date();
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-}
-
 const state = {
-  auth: false,
-  parsedFields: UTILS.buildDefaultOrder(),
-  formRows: [],
+  orderType: "online",
+  presetLanguage: { online: "en", direct: "en" },
+  products: [],
+  manualType: false,
 };
+const $ = (id) => document.getElementById(id);
+const fields = [
+  "name",
+  "mobile",
+  "address",
+  "shoeModel",
+  "size",
+  "unitPrice",
+  "sellingPrice",
+  "deliveryCharge",
+  "extraCost",
+  "parcelId",
+  "status",
+];
 
-function buildDefaultFormRows(data = UTILS.buildDefaultOrder(), rowCount = DEFAULT_FIELD_SEQUENCE.length) {
-  return Array.from({ length: rowCount }, (_, index) => {
-    const fieldKey = DEFAULT_FIELD_SEQUENCE[index % DEFAULT_FIELD_SEQUENCE.length] || 'name';
-    return {
-      id: `row-${index}`,
-      fieldKey,
-      value: data[fieldKey] ?? '',
-    };
+function cookie(name) {
+  const item = document.cookie
+    .split("; ")
+    .find((part) => part.startsWith(`${name}=`));
+  return item ? decodeURIComponent(item.slice(name.length + 1)) : null;
+}
+function setCookie(name, value, days) {
+  const expiry = new Date(Date.now() + days * 86400000);
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expiry.toUTCString()}; path=/; SameSite=Lax`;
+}
+function deleteCookie(name) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+}
+function showScreen(id) {
+  document
+    .querySelectorAll(".screen")
+    .forEach((screen) => screen.classList.toggle("active", screen.id === id));
+}
+function toast(message, type = "success") {
+  const node = $("toast");
+  node.textContent = message;
+  node.className = `toast show ${type}`;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => {
+    node.className = "toast";
+  }, 3200);
+}
+function escapeHtml(value = "") {
+  return String(value).replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      })[character],
+  );
+}
+
+function setOrderType(type, automatic = false) {
+  state.orderType = type;
+  if (!automatic) state.manualType = true;
+  $("onlineTypeBtn").classList.toggle("selected", type === "online");
+  $("directTypeBtn").classList.toggle("selected", type === "direct");
+  document
+    .querySelectorAll("[data-online]")
+    .forEach((field) => (field.hidden = type === "direct"));
+  const check = $("createSteadfast");
+  check.disabled = type === "direct";
+  if (type === "direct") {
+    check.checked = false;
+    ["name", "mobile", "address"].forEach((id) => ($(id).value = ""));
+  }
+  $("submitOrderBtn").innerHTML =
+    `${type === "direct" ? "Save direct sale" : "Save online order"} <span>→</span>`;
+}
+
+function renderPresets() {
+  $("onlineSnippet").textContent = PRESETS.online[state.presetLanguage.online];
+  $("directSnippet").textContent = PRESETS.direct[state.presetLanguage.direct];
+  document.querySelectorAll(".language-button").forEach((button) => {
+    const language =
+      state.presetLanguage[button.dataset.preset] === "en"
+        ? "EN · বাংলা"
+        : "বাংলা · EN";
+    button.textContent = language;
   });
 }
 
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach((screen) => {
-    screen.classList.toggle('active', screen.id === screenId);
-  });
-}
-
-function showToast(message, type = 'success') {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-
-  toast.textContent = message;
-  toast.className = `toast show ${type}`;
-
-  clearTimeout(showToast.timeoutId);
-  showToast.timeoutId = setTimeout(() => {
-    toast.className = 'toast';
-  }, 2800);
-}
-
-function setAuthenticated(value) {
-  state.auth = value;
-  if (value) {
-    UTILS.setCookie(APP_CONFIG.COOKIE_NAME, 'true', APP_CONFIG.COOKIE_DAYS);
-    showScreen('mainScreen');
-  } else {
-    UTILS.deleteCookie(APP_CONFIG.COOKIE_NAME);
-    showScreen('loginScreen');
+async function copyPreset(type, button) {
+  try {
+    await navigator.clipboard.writeText(
+      PRESETS[type][state.presetLanguage[type]],
+    );
+    const label = button.querySelector("span");
+    if (!label) return;
+    label.textContent = "Copied";
+    setTimeout(() => (label.textContent = "Copy"), 1300);
+  } catch (_) {
+    toast("Clipboard access is unavailable in this browser.", "error");
   }
 }
 
-function handleLogin(event) {
-  event.preventDefault();
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
+function applyParsed(parsed) {
+  if (!state.manualType) setOrderType(parsed.orderType, true);
+  fields.forEach((key) => {
+    if (parsed[key] !== undefined && parsed[key] !== "")
+      $(key).value = parsed[key];
+  });
+  delete $("unitPrice").dataset.edited;
+  syncProductPrice(Boolean(parsed.shoeModel));
+}
 
-  if (username === APP_CONFIG.LOGIN_USERNAME && password === APP_CONFIG.LOGIN_PASSWORD) {
-    setAuthenticated(true);
+function parseMessage() {
+  const parsed = window.ORDER_PARSER.parseOrderMessage($("orderInput").value);
+  state.manualType = false;
+  setOrderType(parsed.orderType, true);
+  applyParsed(parsed);
+  toast("Message parsed. Review the fields before saving.");
+}
+
+function syncProductPrice(force) {
+  const selectedName = $("shoeModel").value.trim();
+  const match = state.products.find(
+    (item) =>
+      item.name.trim().toLocaleLowerCase() === selectedName.toLocaleLowerCase(),
+  );
+  if (match) {
+    if (force || !$("unitPrice").dataset.edited)
+      $("unitPrice").value = match.price;
+    $("unitPrice").dataset.productPrice = match.price;
     return;
   }
-
-  showToast('Invalid login details.', 'error');
+  if (force) {
+    $("unitPrice").value = "";
+    delete $("unitPrice").dataset.edited;
+  }
+  delete $("unitPrice").dataset.productPrice;
 }
 
-function escapeHtml(value = '') {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+async function loadProducts() {
+  $("priceChartStatus").textContent = "";
+  try {
+    const response = await fetch(
+      `${APP_CONFIG.SHEET_WEB_APP_URL}?action=products`,
+      { method: "GET", mode: "cors" },
+    );
+    const data = await response.json();
+    if (!response.ok || data.success === false)
+      throw new Error(data.message || "Unable to load the price chart.");
+    state.products = Array.isArray(data.products) ? data.products : [];
+    $("productOptions").innerHTML = state.products
+      .map(({ name }) => `<option value="${escapeHtml(name)}"></option>`)
+      .join("");
+    $("priceChartStatus").textContent = "";
+    syncProductPrice(false);
+  } catch (error) {
+    $("priceChartStatus").textContent = "Unavailable";
+  }
 }
 
-function renderFields(data) {
-  const fieldGrid = document.getElementById('fieldGrid');
-  if (!fieldGrid) return;
-
-  const rows = state.formRows.length
-    ? state.formRows
-    : buildDefaultFormRows(data);
-
-  const extraFields = [
-    'deliveryChargePaid',
-    'accessories',
-    'orderDate',
-  ];
-
-  const renderedRows = rows.map(({ fieldKey, value }, index) => {
-    const definition = UTILS.FIELD_DEFINITIONS[fieldKey] || UTILS.FIELD_DEFINITIONS.name;
-    const editorMarkup = definition.type === 'textarea'
-      ? `<textarea class="field-editor" id="field-${index}" placeholder="${definition.placeholder}">${escapeHtml(value)}</textarea>`
-      : `<input class="field-editor" id="field-${index}" type="${definition.type}" value="${escapeHtml(value)}" placeholder="${definition.placeholder}" />`;
-
-    const optionsMarkup = UTILS.FIELD_OPTIONS.map((option) => `
-      <option value="${option.key}" ${option.key === fieldKey ? 'selected' : ''}>${option.label}</option>
-    `).join('');
-
-    return `
-      <div class="field-row dynamic-field">
-        <div class="field-header">
-          <label class="field-select-wrap" aria-label="Select field">
-            <select class="field-select" data-field-key="${fieldKey}">
-              ${optionsMarkup}
-            </select>
-          </label>
-        </div>
-        <div class="field-value">
-          ${editorMarkup}
-        </div>
-      </div>
-    `;
-  });
-
-  const optionalRows = extraFields.map((fieldKey) => {
-    const definition = UTILS.FIELD_DEFINITIONS[fieldKey];
-    if (!definition) return '';
-
-    if (fieldKey === 'deliveryChargePaid') {
-      return `
-        <div class="field-row">
-          <div class="field-header">
-            <strong>${definition.label}</strong>
-          </div>
-          <div class="field-value">
-            <div class="toggle-wrap">
-              <label class="switch" aria-label="${definition.label}">
-                <input id="deliveryChargePaid" type="checkbox" ${data.deliveryChargePaid ? 'checked' : ''} />
-                <span class="slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    if (fieldKey === 'accessories') {
-      const accessories = UTILS.ACCESSORY_OPTIONS.map((option) => {
-        const checked = (data.accessories || []).includes(option) ? 'checked' : '';
-        return `
-          <label class="check-option">
-            <input type="checkbox" value="${option}" ${checked} />
-            <span>${option}</span>
-          </label>
-        `;
-      }).join('');
-
-      return `
-        <div class="field-row">
-          <div class="field-header">
-            <strong>${definition.label}</strong>
-          </div>
-          <div class="field-value">
-            <div class="accessories-box">${accessories}</div>
-          </div>
-        </div>
-      `;
-    }
-
-    const commonValue = data[fieldKey] ?? UTILS_GET_TODAY_ISO();
-    return `
-      <div class="field-row">
-        <div class="field-header">
-          <strong>${definition.label}</strong>
-        </div>
-        <div class="field-value">
-          <input id="field-orderDate" type="date" value="${commonValue || UTILS_GET_TODAY_ISO()}" />
-        </div>
-      </div>
-    `;
-  });
-
-  fieldGrid.innerHTML = [...renderedRows, ...optionalRows].join('');
-}
-
-function collectFormValues() {
-  const data = UTILS.buildDefaultOrder();
-  const seenFields = new Set();
-
-  const mappedRows = Array.from(document.querySelectorAll('.dynamic-field'));
-  mappedRows.forEach((row) => {
-    const select = row.querySelector('.field-select');
-    const editor = row.querySelector('.field-editor');
-    if (!select || !editor) return;
-
-    const fieldKey = select.value;
-    let value = editor.value.trim();
-
-    if (!fieldKey) return;
-    if (seenFields.has(fieldKey)) {
-      throw new Error(`Duplicate field selected: ${fieldKey}. Each field can only be mapped once.`);
-    }
-    seenFields.add(fieldKey);
-
-    if (Object.prototype.hasOwnProperty.call(data, fieldKey)) {
-      if (fieldKey === 'size' || fieldKey === 'price') {
-        value = UTILS.normalizeNumericValue(value);
-      }
-      data[fieldKey] = value;
-    }
-  });
-
-  const toggle = document.getElementById('deliveryChargePaid');
-  data.deliveryChargePaid = !!(toggle && toggle.checked);
-
-  const checkedAccessories = Array.from(document.querySelectorAll('.check-option input[type="checkbox"]')).filter((input) => input.checked);
-  data.accessories = checkedAccessories.map((input) => input.value);
-
-  const orderDate = document.getElementById('field-orderDate');
-  data.orderDate = orderDate ? orderDate.value || UTILS_GET_TODAY_ISO() : UTILS_GET_TODAY_ISO();
-
-  return data;
-}
-
-function handleParseOrder() {
-  const message = document.getElementById('orderInput').value;
-  const parsed = UTILS.parseOrderMessage(message);
-  state.parsedFields = parsed;
-  state.formRows = state.formRows.length ? state.formRows : buildDefaultFormRows(parsed);
-  renderFields(parsed);
-  showToast('Order details parsed successfully.', 'success');
+function collectPayload() {
+  const data = Object.fromEntries(
+    fields.map((key) => [key, $(key).value.trim()]),
+  );
+  const match = state.products.find(
+    (item) =>
+      item.name.trim().toLocaleLowerCase() ===
+      data.shoeModel.toLocaleLowerCase(),
+  );
+  if (
+    match &&
+    (!$("unitPrice").dataset.edited ||
+      Number(data.unitPrice) === Number($("unitPrice").dataset.productPrice))
+  )
+    data.unitPrice = match.price;
+  return {
+    ...data,
+    orderType: state.orderType,
+    createSteadfast: $("createSteadfast").checked,
+  };
 }
 
 async function submitOrder(event) {
   event.preventDefault();
-
-  const isPlaceholderUrl = !APP_CONFIG.SHEET_WEB_APP_URL || APP_CONFIG.SHEET_WEB_APP_URL.includes('PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE');
-  console.log('isPlaceholderUrl', isPlaceholderUrl, APP_CONFIG.SHEET_WEB_APP_URL);
-  if (isPlaceholderUrl) {
-    showToast('Update APP_CONFIG.SHEET_WEB_APP_URL to your deployed Google Apps Script Web App URL before submitting.', 'error');
-    return;
+  const button = $("submitOrderBtn");
+  const payload = collectPayload();
+  if (payload.createSteadfast) {
+    if (
+      !sessionStorage.getItem(STEADFAST_KEY_STORAGE.api) ||
+      !sessionStorage.getItem(STEADFAST_KEY_STORAGE.secret)
+    ) {
+      toast(
+        "Add your Steadfast API credentials in Settings before submitting this parcel.",
+        "error",
+      );
+      return;
+    }
+    const missing = [
+      ["name", "customer name"],
+      ["mobile", "mobile number"],
+      ["address", "delivery address"],
+    ].find(([key]) => !payload[key]);
+    if (missing) {
+      toast(`Steadfast parcel needs a ${missing[1]}.`, "error");
+      return;
+    }
+    if (
+      payload.sellingPrice === "" ||
+      !Number.isFinite(Number(payload.sellingPrice)) ||
+      Number(payload.sellingPrice) < 0
+    ) {
+      toast("Enter a valid selling price before creating a parcel.", "error");
+      return;
+    }
   }
-
-  let payload;
-  const submitButton = document.getElementById('submitOrderBtn');
-  submitButton.disabled = true;
-  submitButton.textContent = 'Submitting...';
-
+  button.disabled = true;
+  button.textContent = "Saving order…";
   try {
-    payload = collectFormValues();
-    const response = await fetch(APP_CONFIG.SHEET_WEB_APP_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const rawText = await response.text();
-    let result = null;
-
-    try {
-      result = rawText ? JSON.parse(rawText) : null;
-    } catch (parseError) {
-      result = { message: rawText || 'Unable to parse server response.' };
+    const result = await postToSheet(payload);
+    let parcelResult = null;
+    let parcelError = "";
+    let sheetSyncError = "";
+    if (payload.createSteadfast) {
+      try {
+        parcelResult = await createParcel(payload, result.orderId);
+        try {
+          await postToSheet({
+            action: "updateParcel",
+            row: result.row,
+            orderId: result.orderId,
+            parcelId: parcelResult.consignmentId,
+            status: parcelResult.parcelStatus,
+          });
+        } catch (error) {
+          sheetSyncError = error.message;
+        }
+      } catch (error) {
+        parcelError = error.message;
+      }
     }
 
-    if (!response.ok || !result || result.success === false) {
-      throw new Error(result && result.message ? result.message : 'Unable to submit order.');
+    $("orderForm").reset();
+    $("orderInput").value = "";
+    delete $("unitPrice").dataset.edited;
+    state.manualType = false;
+    setOrderType("online", true);
+    syncProductPrice(false);
+    if (parcelResult) {
+      showParcelModal(parcelResult, sheetSyncError);
+    } else if (parcelError) {
+      toast(
+        `Order ${result.orderId} saved. Parcel creation failed: ${parcelError}`,
+        "error",
+      );
+    } else {
+      toast(`Order ${result.orderId} saved.`);
     }
-
-    showToast(result.orderId ? `Order noted: ${result.orderId}` : 'Order noted successfully.', 'success');
-    document.getElementById('orderInput').value = '';
-    state.parsedFields = UTILS.buildDefaultOrder();
-    renderFields(state.parsedFields);
   } catch (error) {
-    const message = error && error.message === 'Failed to fetch'
-      ? 'CORS blocked: redeploy the Google Apps Script as a public web app and update SHEET_WEB_APP_URL in app.js.'
-      : (error && error.message) || 'Submission failed.';
-
-    showToast(message, 'error');
+    toast(
+      error.message === "Failed to fetch"
+        ? "Could not reach the order service. Check the Apps Script URL and deployment."
+        : error.message || "Submission failed.",
+      "error",
+    );
   } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = 'Submit order';
+    button.disabled = false;
+    button.innerHTML = `${state.orderType === "direct" ? "Save direct sale" : "Save online order"} <span>→</span>`;
   }
+}
+
+async function postToSheet(payload) {
+  const response = await fetch(APP_CONFIG.SHEET_WEB_APP_URL, {
+    method: "POST",
+    mode: "cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload),
+  });
+  const raw = await response.text();
+  let result;
+  try {
+    result = JSON.parse(raw);
+  } catch (_) {
+    throw new Error(raw || "Unable to parse the Apps Script response.");
+  }
+  if (!response.ok || !result || result.success === false)
+    throw new Error(
+      result?.message || "Unable to save order to Google Sheets.",
+    );
+  return result;
+}
+
+async function createParcel(payload, invoice) {
+  const apiKey = sessionStorage.getItem(STEADFAST_KEY_STORAGE.api) || "";
+  const secretKey = sessionStorage.getItem(STEADFAST_KEY_STORAGE.secret) || "";
+  if (!apiKey || !secretKey)
+    throw new Error(
+      "Add your Steadfast API credentials in Settings before creating a parcel.",
+    );
+  const digits = (value) =>
+    String(value || "")
+      .replace(/[০-৯]/g, (digit) => String("০১২৩৪৫৬৭৮৯".indexOf(digit)))
+      .replace(/\D/g, "");
+  let phone = digits(payload.mobile);
+  if (/^8801\d{9}$/.test(phone)) phone = `0${phone.slice(3)}`;
+  if (!/^01\d{9}$/.test(phone))
+    throw new Error(
+      "Steadfast requires an 11-digit Bangladesh mobile number beginning with 01.",
+    );
+  const sellingPrice = Number(payload.sellingPrice);
+  const deliveryCharge = Number(payload.deliveryCharge || 0);
+  const codAmount = sellingPrice + deliveryCharge;
+  if (!Number.isFinite(codAmount) || codAmount < 0 || codAmount > 1000000)
+    throw new Error("COD amount must be between 0 and 1,000,000.");
+  const itemDescription = [
+    payload.shoeModel && `Shoe: ${payload.shoeModel}`,
+    payload.size && `Size: ${payload.size}`,
+    payload.unitPrice && `Unit price: ${payload.unitPrice}`,
+    payload.sellingPrice && `Selling price: ${payload.sellingPrice}`,
+    payload.deliveryCharge && `Delivery: ${payload.deliveryCharge}`,
+    payload.extraCost && `Extra cost: ${payload.extraCost}`,
+  ]
+    .filter(Boolean)
+    .join(" | ")
+    .slice(0, 255);
+  const order = {
+    invoice: String(invoice),
+    recipient_name: payload.name.trim().slice(0, 100),
+    recipient_phone: phone,
+    recipient_address: payload.address.trim().slice(0, 490),
+    cod_amount: codAmount,
+    item_description: itemDescription,
+  };
+  try {
+    const response = await fetch(`${STEADFAST_API_BASE_URL}/create_order`, {
+      method: "POST",
+      headers: {
+        "Api-Key": apiKey,
+        "Secret-Key": secretKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(order),
+    });
+    const result = await response.json().catch(() => null);
+    const consignment = result?.consignment;
+    if (
+      !response.ok ||
+      Number(result?.status) !== 200 ||
+      !consignment?.consignment_id
+    ) {
+      const errors =
+        result?.errors && Object.values(result.errors).flat().join(" ");
+      throw new Error(
+        errors || result?.message || "Steadfast could not create the parcel.",
+      );
+    }
+    return {
+      consignmentId: consignment.consignment_id,
+      trackingCode: consignment.tracking_code || "",
+      trackingUrl: consignment.tracking_link || "",
+      parcelStatus: consignment.status || "",
+    };
+  } catch (error) {
+    if (error.message === "Failed to fetch")
+      throw new Error(
+        "Could not reach Steadfast directly. Check the browser network/CORS response and try again.",
+      );
+    throw error;
+  }
+}
+
+function showParcelModal(parcel, sheetSyncError = "") {
+  $("parcelIdValue").textContent = parcel.consignmentId || "—";
+  $("trackingCodeValue").textContent = parcel.trackingCode || "—";
+  $("parcelTrackingLink").href = parcel.trackingUrl || "#";
+  $("parcelTrackingLink").hidden = !parcel.trackingUrl;
+  $("parcelSyncMessage").textContent = sheetSyncError
+    ? `Parcel created, but its details could not be saved to the order sheet: ${sheetSyncError}`
+    : "";
+  $("parcelModal").hidden = false;
+  $("parcelModalOk").focus();
+}
+
+function closeParcelModal() {
+  $("parcelModal").hidden = true;
+  $("submitOrderBtn").focus();
 }
 
 function init() {
-  const savedAuth = UTILS.getCookie(APP_CONFIG.COOKIE_NAME);
-  const loginForm = document.getElementById('loginForm');
-  const parseButton = document.getElementById('parseButton');
-  const orderForm = document.getElementById('orderForm');
-  const logoutButton = document.getElementById('logoutBtn');
-
-  if (loginForm) {
-    loginForm.addEventListener('submit', handleLogin);
-  }
-
-  if (parseButton) {
-    parseButton.addEventListener('click', handleParseOrder);
-  }
-
-  if (orderForm) {
-    orderForm.addEventListener('submit', submitOrder);
-  }
-
-  if (logoutButton) {
-    logoutButton.addEventListener('click', () => setAuthenticated(false));
-  }
-
-  state.formRows = buildDefaultFormRows(state.parsedFields);
-  renderFields(state.parsedFields);
-
-  if (savedAuth === 'true') {
-    setAuthenticated(true);
-  } else {
-    showScreen('loginScreen');
+  $("loginForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (
+      $("username").value.trim() === APP_CONFIG.LOGIN_USERNAME &&
+      $("password").value.trim() === APP_CONFIG.LOGIN_PASSWORD
+    ) {
+      setCookie(APP_CONFIG.COOKIE_NAME, "true", APP_CONFIG.COOKIE_DAYS);
+      showScreen("mainScreen");
+      loadProducts();
+    } else toast("Invalid login details.", "error");
+  });
+  $("logoutBtn").addEventListener("click", () => {
+    deleteCookie(APP_CONFIG.COOKIE_NAME);
+    showScreen("loginScreen");
+  });
+  $("parseButton").addEventListener("click", parseMessage);
+  $("orderInput").addEventListener("input", () => {
+    const detected = window.ORDER_PARSER.detectOrderType($("orderInput").value);
+    state.manualType = false;
+    setOrderType(detected, true);
+  });
+  $("onlineTypeBtn").addEventListener("click", () => setOrderType("online"));
+  $("directTypeBtn").addEventListener("click", () => setOrderType("direct"));
+  document.querySelectorAll(".language-button").forEach((button) =>
+    button.addEventListener("click", () => {
+      const key = button.dataset.preset;
+      state.presetLanguage[key] =
+        state.presetLanguage[key] === "en" ? "bn" : "en";
+      renderPresets();
+    }),
+  );
+  document
+    .querySelectorAll(".copy-button")
+    .forEach((button) =>
+      button.addEventListener("click", () =>
+        copyPreset(button.dataset.copy, button),
+      ),
+    );
+  $("shoeModel").addEventListener("change", () => syncProductPrice(true));
+  $("shoeModel").addEventListener("input", () => syncProductPrice(false));
+  $("unitPrice").addEventListener(
+    "input",
+    () => ($("unitPrice").dataset.edited = "true"),
+  );
+  $("refreshPrices").addEventListener("click", loadProducts);
+  $("settingsBtn").addEventListener("click", openSettings);
+  $("settingsCancel").addEventListener("click", closeSettings);
+  $("settingsModal").addEventListener("click", (event) => {
+    if (event.target === $("settingsModal")) closeSettings();
+  });
+  $("settingsForm").addEventListener("submit", saveSettings);
+  $("orderForm").addEventListener("submit", submitOrder);
+  $("parcelModalOk").addEventListener("click", closeParcelModal);
+  $("parcelModal").addEventListener("click", (event) => {
+    if (event.target === $("parcelModal")) closeParcelModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if ($("parcelModal").hidden) return;
+    if (event.key === "Escape") {
+      closeParcelModal();
+      return;
+    }
+    if (event.key === "Tab") {
+      const focusable = Array.from(
+        $("parcelModal").querySelectorAll("a[href], button:not([disabled])"),
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  });
+  renderPresets();
+  setOrderType("online", true);
+  if (cookie(APP_CONFIG.COOKIE_NAME) === "true") {
+    showScreen("mainScreen");
+    loadProducts();
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+function openSettings() {
+  $("steadfastApiKey").value =
+    sessionStorage.getItem(STEADFAST_KEY_STORAGE.api) || "";
+  $("steadfastSecretKey").value =
+    sessionStorage.getItem(STEADFAST_KEY_STORAGE.secret) || "";
+  $("settingsModal").hidden = false;
+  $("steadfastApiKey").focus();
+}
+function closeSettings() {
+  $("settingsModal").hidden = true;
+  $("settingsBtn").focus();
+}
+function saveSettings(event) {
+  event.preventDefault();
+  const apiKey = $("steadfastApiKey").value.trim();
+  const secretKey = $("steadfastSecretKey").value.trim();
+  if (!apiKey || !secretKey)
+    return toast("Enter both Steadfast credentials.", "error");
+  sessionStorage.setItem(STEADFAST_KEY_STORAGE.api, apiKey);
+  sessionStorage.setItem(STEADFAST_KEY_STORAGE.secret, secretKey);
+  closeSettings();
+  toast("Steadfast credentials saved for this browser session.");
+}
+document.addEventListener("DOMContentLoaded", init);
